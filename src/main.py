@@ -4,5 +4,6 @@
 ##                                              The latest step in your favorite lunatic Discord bot.                                              ##
 ##                                                                                                                                                 ##
 ##                                   Started by Kalinite, with contributions and forks from the lovely community.                                  ##
+##                                                      https://github.com/FateUnix29/Rubicon5                                                     ##
 ##                                                                                                                                                 ##
 #####################################################################################################################################################
