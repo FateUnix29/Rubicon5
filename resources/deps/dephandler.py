@@ -32,17 +32,20 @@ def soft_dependency(name: str | None = None, descriptions: dict[str, str] | None
     try:
         yield
     except ImportError as e:
-        module_name = str(e).split("'")[1] if "'" in str(e) else "Unknown Module"
-
-        desc = descriptions.get(module_name, None)
+        module_names = [str(e).split("'")[1] if "'" in str(e) else "Unknown Module"]
         
-        if desc is None:
-            desc = "While it technically isn't required, it's highly recommended to install it."
+        for module_name in module_names:
+            desc = descriptions.get(module_name, None)
+            
+            if desc is None:
+                desc = "While it technically isn't required, it's highly recommended to install it."
+            else:
+                desc = desc.replace("$NAME", name)
+            
+            print(f"\033[93mWarning: {module_name}, a soft dependency of {name}, is not installed. {desc}\033[0m")
         
-        else:
-            desc = desc.replace("$NAME", name)
-
-        print(f"\033[93mWarning: {module_name}, a soft dependency of {name}, is not installed. {desc}\033[0m")
+        # Continue execution after printing warnings
+        pass
 
 @contextmanager
 def hard_dependency(name: str | None = None, descriptions: dict[str, str] | None = None) -> Generator[None, None, None]:

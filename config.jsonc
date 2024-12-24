@@ -1,0 +1,13 @@
+{
+    // AI
+    "bot_name":   "Rubicon",
+    "temperature": 0.25,
+    "top_p":       1.00,
+    "top_k":       40,
+    "frequency_penalty": 0.00,
+    "presence_penalty": 0.00,
+    "max_tokens":  32768,
+    "random_message_chance": 50,
+    "default_sibling_count": 0,
+    "model_name": "llama-3.3-70b-versatile" 
+}

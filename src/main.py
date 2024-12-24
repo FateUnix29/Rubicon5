@@ -8,23 +8,130 @@
 ##                                                                                                                                                 ##
 #####################################################################################################################################################
 
-### Hard-coded Python Modules ###
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+###                                                           Hard-coded Python Modules                                                           ###
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
 
-import os, sys
-from pathlib import Path
+import os, sys                                                            # OS and System | System-specific parameters and functions, as well as path manipulation
+from pathlib import Path                                                  # Path          | Manipulate path-like objects
 
-### Internal Source Files ###
+from os.path import \
+    dirname, join as pjoin, exists, isfile, isdir, basename, realpath     # OS and System | Path manipulation.
+
+import signal                                                             # Signals       | Handle system signals.
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+###                                                             Internal Source Files                                                             ###
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
 
 sys.path.append(str(Path(__file__).parent.parent))
-from resources.deps.dephandler import *
-from resources.deps.dependencydefs import *
+
+from resources.deps.dephandler import *                                   # Resources     | Dependency handler.
+from resources.deps.dependencydefs import *                               # Resources     | Descriptions for dependencies.
+from resources.term.colors import *                                       # Resources     | Terminal coloring system.
+
+from src.interconnections import *                                        # Source Code   | Interconnections is a special file that connects all the source files,
+#                                                                                         | managing to prevent a circular import.
+
+import mods                                                               # Modules       | Unused. Just starts the modules.
+from src.modularity import *                                              # Modules       | The experimental RB5 modularity system, including live patching.
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+###                                                                External Modules                                                               ###
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ### Hard Dependencies ###
 
 with hard_dependency("Rubicon", hard_dependencies): import discord
+with hard_dependency("Rubicon", hard_dependencies): import jurigged
 
 ### Soft Dependencies ###
 
-with soft_dependency("Rubicon", soft_dependencies): import groq
-with soft_dependency("Rubicon", soft_dependencies): import ollama
-with soft_dependency("Rubicon", soft_dependencies): import logging
+#with soft_dependency("Rubicon", soft_dependencies): import groq
+#with soft_dependency("Rubicon", soft_dependencies): import ollama
+#with soft_dependency("Rubicon", soft_dependencies): import logging
+#with soft_dependency("Rubicon", soft_dependencies): import blessed
+with soft_dependency("Rubicon", soft_dependencies):
+    import groq
+    import ollama
+    import logging
+    import a, b, c
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+###                                                            Initialization: Stage 1                                                            ###
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+
+def jinfo(msg: str, *args, **kwargs):
+    """linfo() specialized for Jurigged."""
+
+    return linfo(f"main::jurigged || {msg}", *args, **kwargs)
+
+jurigged.watch(logger=jinfo)
+
+print(f"{FM.ginfo} {linfo("main || Initialized (stage-1).")}")
+
+def interrupthandle(_, __):
+    linfo("main || Interrupt signal received. Cleaning up. Goodnight.")
+    cleanup()
+    print(f"{FM.bold}{FM.light_cyan}Goodnight.")
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, interrupthandle)
+
+linfo("main || Initialized interrupt handler.")
+
+ret = None
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+###                                                                   Functions                                                                   ###
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+
+# ...
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+###                                                                Discord: Events                                                                ###
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+
+@client.event
+#@modular(globals_=globals(), no_call=False)
+async def on_ready():
+    print(f"{FM.ginfo} {linfo(f'main::on_ready || Logged in... {client.user}:{client.user.id}')}")
+    await tree.sync(guild=discord.Object(id=1278530648725913611))
+    print(f"{FM.ginfo} {linfo(f'main::on_ready || Synced commands...')}")
+    
+    # FIXME: NON-MODULAR
+    
+
+@client.event
+#@modular(globals_=globals(), no_call=False)
+async def on_message(message):
+    global ret
+
+#@module("on_ready", 6)
+def readydbg(*args, **kwargs):
+    print("DEBUG MODULE TRIGGERED")
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+###                                                                    Cleanup                                                                    ###
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+
+def cleanup():
+    for logger in loggers:
+        print(f"{FM.info} {linfo(f'main::cleanup || Closing logger \'{logger.name}\'...')}")
+        logger.removeHandler(handler)
+    handler.close()
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+###                                                                    Running                                                                    ###
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+
+if __name__ == "__main__":
+
+    #try:
+    linfo("main || Running...")
+    client.run(discord_token)
+
+    #except KeyboardInterrupt:
+    #    interrupthandle(None, None)
