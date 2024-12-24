@@ -47,15 +47,11 @@ with hard_dependency("Rubicon", hard_dependencies): import jurigged
 
 ### Soft Dependencies ###
 
-#with soft_dependency("Rubicon", soft_dependencies): import groq
-#with soft_dependency("Rubicon", soft_dependencies): import ollama
-#with soft_dependency("Rubicon", soft_dependencies): import logging
+with soft_dependency("Rubicon", soft_dependencies): import groq # i promise i will fix this and it wont look as terrible
+with soft_dependency("Rubicon", soft_dependencies): import ollama # maybe it'll still be a context manager
+with soft_dependency("Rubicon", soft_dependencies): import logging # probably not
 #with soft_dependency("Rubicon", soft_dependencies): import blessed
-with soft_dependency("Rubicon", soft_dependencies):
-    import groq
-    import ollama
-    import logging
-    import a, b, c
+    #import a, b, c
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -100,18 +96,14 @@ async def on_ready():
     print(f"{FM.ginfo} {linfo(f'main::on_ready || Logged in... {client.user}:{client.user.id}')}")
     await tree.sync(guild=discord.Object(id=1278530648725913611))
     print(f"{FM.ginfo} {linfo(f'main::on_ready || Synced commands...')}")
-    
+    # As of Rubicon 5, servers are NOT security-checked to see if Rubicon should be there.
+
     # FIXME: NON-MODULAR
-    
 
 @client.event
 #@modular(globals_=globals(), no_call=False)
 async def on_message(message):
     global ret
-
-#@module("on_ready", 6)
-def readydbg(*args, **kwargs):
-    print("DEBUG MODULE TRIGGERED")
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 ###                                                                    Cleanup                                                                    ###

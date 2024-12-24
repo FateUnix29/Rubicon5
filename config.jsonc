@@ -1,13 +1,36 @@
 {
     // AI
-    "bot_name":   "Rubicon",
-    "temperature": 0.25,
-    "top_p":       1.00,
-    "top_k":       40,
-    "frequency_penalty": 0.00,
-    "presence_penalty": 0.00,
-    "max_tokens":  32768,
-    "random_message_chance": 50,
-    "default_sibling_count": 0,
-    "model_name": "llama-3.3-70b-versatile" 
+    "bot_name":   "Rubicon",                           // The name that Rubicon takes on. Display name is set to this as well.
+    "temperature": 0.25,                               // Rubicon's temperature. Less likely words/symbols become more likely to be chosen as this goes up.
+    "top_p":       1.00,                               // Top percentage. Like temperature in reverse. Recommended not to mix temp and top_p. 0-1.
+    "top_k":       40,                                 // Top K most probable tokens (words & symbols). 40 means only the top 40 most probable tokens are considered.
+    "frequency_penalty": 0.00,                         // Lowers the 'score' of each used word depending on how much it's been used, making them less likely to be used again.
+    "presence_penalty": 0.00,                          // Encourages the use of different words by applying a penalty even if a word is only used once. Applied only once per word.
+    "max_tokens":  32768,                              // Context length/max token count. The memory of the AI is finite, and limited to this many tokens.
+    "random_message_chance": 150,                      // 1/n chance that a randomized message is provided with the AI response.
+    "default_sibling_count": 0,                        // How many siblings Rubicon has by default.
+    "model_name": "llama-3.3-70b-versatile",           // The name of the model to use - Use "ollama/" prefix for local models
+
+    // Discord
+    "discord_token_name": "DT",                        // The name of the environment variable that contains the Discord bot token.
+    "maybe_groq_key_name": "GK", // or null            // The name of the environment variable that contains the Groq key.
+    "general_channel_names": ["rubicon-general"],      // A list of channel names to respond in.
+    "respond_by_default": false,                       // Respond by default in said channels?
+    "server_to_sync_to": null,                         // Server to sync to. Leave null to sync to all servers.
+    "system_channel_name": "rubicon-system-messages",  // The name of the system channel.
+    "all_channel_name": "rubicon-all",                 // The name of the 'all channel': A channel that conjoins all servers Rubicon is in.
+    "all_channel_enabled": true,                       // If false, the all channel is just a regular channel. Set to false if you don't want to use it or if Rubicon is in 10+ servers or so.
+
+    "guilds_blacklist": [],                            // Guild IDs in this list have no authority over Rubicon; their elevated/control roles have no effect.
+
+    // Discord: Roles
+    "rubicon_control_role": "Rubicon Control",         // The name of the role that has the most control over Rubicon.
+    "rubicon_elevated_role": "Rubicon Elevated",       // The name of the role that has elevated control over Rubicon.
+    "rubicon_boot_role": "Rubicon Boot Ping",          // The name of the role to ping when Rubicon boots.
+    "no_rubicon_role": "No Rubicon",                   // The name of the role to ignore.
+
+    // Other
+    "crashes_are_siblings": true,                      // If true, the sibling count is incremented when a crash occurs.
+    "ping_on_boot": false,                             // If true, ping the boot role when Rubicon starts. 
+    "boot_message": false                              // If true, send a boot message when Rubicon starts.
 }
