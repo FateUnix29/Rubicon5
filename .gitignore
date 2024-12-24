@@ -6,3 +6,7 @@ __pycache__/
 
 # Any .log files.
 *.log
+
+# Any files whos' names start with a dot or "EXCLUDE"
+EXCLUDE*
+.*

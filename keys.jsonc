@@ -1,5 +1,5 @@
 {
     // 'DT' is the name of my environment variable.
     "discord_token": "DT",
-    "groq_key": "GK"
+    "groq_key": "GK" // or null
 }

@@ -18,6 +18,8 @@ from os.path import \
 import time, datetime                                                     # Time          | Time functions
 from src.modularity import *                                              # Modules       | The experimental RB5 modularity system, including live patching.
 
+from copy import deepcopy                                                 # Copy          | Create a deep copy of an object
+
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 ###                                                             Internal Source Files                                                             ###
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -29,6 +31,8 @@ from resources.deps.dependencydefs import *
 from resources.term.colors import *
 
 from resources.safe.ioutils import *
+
+from src import base
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 ###                                                                External Modules                                                               ###
@@ -82,11 +86,12 @@ def log(level: str = "info", msg: str = "", *args, **kwargs):
 
     if logging_available:
         match level:
-            case "info":    logger.info(msg, *args, **kwargs)
-            case "warning": logger.warning(msg, *args, **kwargs)
-            case "error":   logger.error(msg, *args, **kwargs)
-            case "debug":   logger.debug(msg, *args, **kwargs)
-            case _:         logger.debug(msg, *args, **kwargs)
+            case "info":     logger.info(msg, *args, **kwargs)
+            case "warning":  logger.warning(msg, *args, **kwargs)
+            case "error":    logger.error(msg, *args, **kwargs)
+            case "debug":    logger.debug(msg, *args, **kwargs)
+            case "critical": logger.critical(msg, *args, **kwargs)
+            case _:          logger.debug(msg, *args, **kwargs)
 
     return msg
 
@@ -161,10 +166,12 @@ discord_token = os.environ.get(discord_token_unparsed)
 
 if groq_available:
     groq_key = os.environ.get(groq_key_unparsed)
+    groq_client = groq.Groq(api_key=groq_key)
 
 else:
-    print(f"{FM.warning} Groq not available.")
+    print(f"{FM.warning} Groq is not available.")
     linfo("interconnections || Groq does not seem to be available!")
+    groq_client = None
 
 linfo("interconnections || Keys get!")
 
@@ -185,8 +192,9 @@ def get_config(path: str, update_globals: bool = False) -> dict | JSONOperationF
 linfo("interconnections || Grabbing config...")
 
 conf = get_config(pjoin(dirpath, "..", "config.jsonc"), True)
+ldebug(f"interconnections || Config:\n{conf}")
 
-if not isinstance(conf, dict):
+if not isinstance(conf, (dict, JSONOperationFailed)):
     FM.header_error("Bad Config Information", f"Config file is malformed. Bad data type.\n{conf}\nPossible traceback:\n{traceback.format_exc()}")
     lcritical("Bad Config Information" + f"\nConfig file is malformed. Bad data type.\n{conf}\nPossible traceback:\n{traceback.format_exc()}")
     sys.exit(1)
@@ -197,3 +205,6 @@ if isinstance(conf, JSONOperationFailed):
     sys.exit(1)
 
 linfo("interconnections || Config grabbed successfully!")
+
+conversation = deepcopy(base.baseconvo)
+backup_conversation = deepcopy(base.baseconvo)

@@ -19,7 +19,9 @@ import os
 from resources.deps.dephandler import *
 from resources.deps.dependencydefs import *
 
-### Hard Dependencies ###
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+###                                                                External Modules                                                               ###
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
 
 with hard_dependency("Rubicon", hard_dependencies): import jsonc
 

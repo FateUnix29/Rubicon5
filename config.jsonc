@@ -12,14 +12,13 @@
     "model_name": "llama-3.3-70b-versatile",           // The name of the model to use - Use "ollama/" prefix for local models
 
     // Discord
-    "discord_token_name": "DT",                        // The name of the environment variable that contains the Discord bot token.
-    "maybe_groq_key_name": "GK", // or null            // The name of the environment variable that contains the Groq key.
     "general_channel_names": ["rubicon-general"],      // A list of channel names to respond in.
     "respond_by_default": false,                       // Respond by default in said channels?
     "server_to_sync_to": null,                         // Server to sync to. Leave null to sync to all servers.
     "system_channel_name": "rubicon-system-messages",  // The name of the system channel.
     "all_channel_name": "rubicon-all",                 // The name of the 'all channel': A channel that conjoins all servers Rubicon is in.
     "all_channel_enabled": true,                       // If false, the all channel is just a regular channel. Set to false if you don't want to use it or if Rubicon is in 10+ servers or so.
+    "special_character": "^",                          // Modifies the behavior of Rubicon for messages starting with this character. Usually flips the mode, but also does other stuff.
 
     "guilds_blacklist": [],                            // Guild IDs in this list have no authority over Rubicon; their elevated/control roles have no effect.
 
@@ -31,6 +30,9 @@
 
     // Other
     "crashes_are_siblings": true,                      // If true, the sibling count is incremented when a crash occurs.
-    "ping_on_boot": false,                             // If true, ping the boot role when Rubicon starts. 
-    "boot_message": false                              // If true, send a boot message when Rubicon starts.
+    "ping_on_boot": true,                              // If true, ping the boot role when Rubicon starts. 
+    "boot_message": true,                              // If true, send a boot message when Rubicon starts.
+
+    // Advanced
+    "version": "5.0.0.0"                               // The displayed version of the program. Unless you are modifying Rubicon, it is not recommended to change this.
 }

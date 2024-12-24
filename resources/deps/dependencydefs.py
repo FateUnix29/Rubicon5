@@ -10,7 +10,8 @@ hard_dependencies = {
 As such, the program will now exit.",
     "traceback": "Traceback is a crucial library for debugging $NAME and understanding errors in full. It's so useful that this program won't run without it.",
     "jsonc": "$NAME doesn't just use plain .json files. A lot of the files are .jsonc instead. If $NAME were to parse it with the regular json library, it would crash.",
-    "jurigged": "Jurigged is a hot code reloading library. It would be a soft dependency, but it is so highly recommended that the program won't continue without it."
+    "jurigged": "Jurigged is a hot code reloading library. It would be a soft dependency, but it is so highly recommended that the program won't continue without it.",
+    "datetime": "Datetime is a really useful date & time library that Rubicon uses in several areas. It would be really inconvenient for both Rubicon's backend and you if it were missing."
 }
 
 soft_dependencies = {
@@ -22,5 +23,7 @@ If you're interested in using $NAME with Ollama, you can install it with 'pip in
 
     "logging": "Logging is a library that allows $NAME to log messages to a file. It's highly recommended, for debuging purposes, and other general keeping-track-of-things purposes.",
 
-    "blessed": "Blessed is a cool library that allows $NAME to do some pretty cool terminal interactions. Optional, but recommended."
+    "blessed": "Blessed is a cool library that allows $NAME to do some pretty cool terminal interactions. Optional, but recommended.",
+    
+    "requests": "Web requests. Highly recommended. Rubicon can't check if model names are actually valid without it."
 }
