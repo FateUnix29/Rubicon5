@@ -209,3 +209,15 @@ linfo("interconnections || Config grabbed successfully!")
 conversation = deepcopy(base.baseconvo)
 conversation[0]["content"] = conversation[0]["content"].replace(f"{{name}}", str(conf.get("bot_name", "Rubicon")))
 backup_conversation = deepcopy(conversation)
+
+nicks = read_json_safe(pjoin(dirpath, "..", "nicknames.json"))
+
+if not isinstance(nicks, (dict, JSONOperationFailed)):
+    FM.header_error("Bad Nicknames Information", f"Nicknames file is malformed. Bad data type.\n{nicks}\nPossible traceback:\n{traceback.format_exc()}")
+    lcritical("Bad Nicknames Information" + f"\nNicknames file is malformed. Bad data type.\n{nicks}\nPossible traceback:\n{traceback.format_exc()}")
+    sys.exit(1)
+
+if isinstance(nicks, JSONOperationFailed):
+    FM.header_error("Bad Nicknames Information", f"The nicknames.json file is malformed. Does it exist?\n{nicks.msg}\nPossible traceback:\n{traceback.format_exc()}")
+    lcritical("Bad Nicknames Information" + f"\nThe nicknames.json file is malformed. Does it exist?\n{nicks.msg}\nPossible traceback:\n{traceback.format_exc()}")
+    sys.exit(1)

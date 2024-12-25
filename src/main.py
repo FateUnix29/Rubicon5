@@ -141,6 +141,9 @@ async def on_ready():
     else:
         strtime = "evening"
 
+    # Quick little detour:
+    await client.user.edit(username=conf.get("bot_name", "Rubicon"))
+
     embed = discord.Embed(
         title=f"Good {strtime}! {conf.get('bot_name', 'Rubicon')} is online!",
         color=discord.Color.yellow(),
@@ -171,12 +174,18 @@ restricted_phrases = ["[Inst]", "</s>", "<s>", "(/s)", "[deleted]", "[/s]", "[!/
 @client.event
 #@modular(globals_=globals(), no_call=False)
 async def on_message(message):
-    global ret, conversation, backup_conversation, conf
+    global ret, conversation, backup_conversation, conf, nicks
 
     # FIXME: DEEEEEFINITELY NOT MODULAR
 
     prompt_rubicon = True
     message_content = message.content
+    isdm = False
+    
+    rubi_perceived_display = nicks.get(message.author.id, message.author.display_name)
+    isnick = message.author.display_name != rubi_perceived_display
+    
+    rubi_perceived_name = rubi_perceived_display if isnick else message.author.name
 
     starts_with_special_char = message_content.startswith(str(conf.get("special_character", "^")))
     if starts_with_special_char:
@@ -186,18 +195,29 @@ async def on_message(message):
         ldebug("main::on_message || Message is from ourselves - No special character. Ignoring...")
         return
 
-    if not message.guild:
+    if not message.guild and message.author.id not in conf.get("who_can_dm_me", []):
         ldebug("main::on_message || Message is from a DM. Ignoring...")
         return
+
+    elif not message.guild and message.author.id in conf.get("who_can_dm_me", []):
+        # We shall allow DMs from this person.
+        msgguild = "DM/Group DM [guild unknown]"
+        channelname = "[channel unknown]"
+        isdm = True
+        pass
     
-    if not message.channel.name in list(conf.get("general_channel_names", [])):
-        if message.channel.name == conf.get("all_channel_name", "rubicon-all"):
+    elif message.guild:
+        msgguild = message.guild.name
+        channelname = message.channel.name
+    
+    if not channelname in list(conf.get("general_channel_names", [])):
+        if channelname == conf.get("all_channel_name", "rubicon-all"):
             if not starts_with_special_char:
                 prompt_rubicon = False
             
             # TODO conjoined message handling
         else:
-            if f'<@{client.user.id}>' not in message_content:
+            if f'<@{client.user.id}>' not in message_content and not isdm:
                 prompt_rubicon = False
     
     else:
@@ -206,7 +226,7 @@ async def on_message(message):
 
     message_content = message_content.strip()
 
-    assembled_header, _ = message_header(message, accurate_datetime())
+    assembled_header, _ = message_header(rubi_perceived_display, rubi_perceived_name, channelname, msgguild, accurate_datetime())
     full_message = f"{assembled_header}{message_content}"
     
     print(f"{FM.light_blue}{assembled_header}{FM.light_cyan}{message_content}")
@@ -415,11 +435,19 @@ For full information, please see the documentation for `pytz.timezone()`.
             timezone2print = timezone
 
             christmas_time = dt(current_time.year, 12, 25, tzinfo=tz)
+
+            if christmas_time < current_time:
+                christmas_time = dt(current_time.year + 1, 12, 25, tzinfo=tz)
+
         else:
             current_time = dt.now()
             timezone2print = "US/Pacific"
 
             christmas_time = dt(current_time.year, 12, 25)
+
+            if christmas_time < current_time:
+                christmas_time = dt(current_time.year + 1, 12, 25)
+
     except pytz.UnknownTimeZoneError:
         await ctx.response.send_message(f"Bad timezone! Please enter a valid timezone. Try entering no timezone for more information.")    
         return
@@ -445,6 +473,46 @@ For full information, please see the documentation for `pytz.timezone()`.
     time_left_real = christmas_time_real - current_time_real
 
     await ctx.response.send_message(f"Christmas Day is in `{time_left_days}` days, `{time_left_hours}` hours, and `{time_left_minutes}` minutes for the `{timezone2print}` timezone.\nIn other words, `{time_left_days_pad}:{time_left_hours_pad}:{time_left_minutes_pad}:{time_left_seconds_pad}`.\n-# The exact time in standard UNIX format is `{time_left_real}`.")
+
+@tree.command(name="nickname", description="Change your nickname, the name the bot perceives you as.", guild=discord.Object(id=1278530648725913611))
+async def nickname(ctx: discord.interactions.Interaction, nickname: str = ""):
+    global nicks
+
+    print(f"{FM.info} {linfo(f"main::nickname || Changing nickname of user '{ctx.user.display_name} ({ctx.user.id}) to '{nickname or '(resetting++)'}'...")}")
+    nickpath = pjoin(dirpath, "..", "nicknames.json")
+
+    nicks = read_json_safe(nickpath)
+
+    if not isinstance(nicks, (dict, JSONOperationFailed)):
+        print(f"{FM.error} {lerror(f"main::nickname || Failed to change user's nickname. Information: {nicks.msg}, possible traceback:\n{traceback.format_exc()}")}")
+        await ctx.channel.send("Failed to change nickname!")
+        return
+
+    if isinstance(nicks, JSONOperationFailed):
+        print(f"{FM.error} {lerror(f"main::nickname || Failed to change user's nickname. Information: {nicks.msg}, possible traceback:\n{traceback.format_exc()}")}")
+        await ctx.channel.send("Failed to change nickname!")
+        return
+
+    if nickname == "":
+        # Reset.
+        nicks[str(ctx.user.id)] = None
+        await ctx.response.send_message("Resetting nickname...")
+
+    else:
+        if not nicks.get(str(ctx.user.id), None) == nickname:
+            nicks[str(ctx.user.id)] = nickname
+            await ctx.response.send_message("Changing nickname...")
+
+    status = write_file_safe(json.dumps(nicks, indent=4), nickpath)
+
+    if isinstance(status, str):
+        print(f"{FM.info} {linfo("main::nickname || Success!")}")
+        await ctx.channel.send(status)
+
+    else:
+        print(f"{FM.error} {lerror(f"main::nickname || Failed to change user's nickname. Information: {status.msg}, possible traceback:\n{traceback.format_exc()}")}")
+        await ctx.channel.send("Failed to change nickname!")
+
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 ###                                                                    Cleanup                                                                    ###

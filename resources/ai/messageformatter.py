@@ -10,16 +10,15 @@
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
 import datetime                                                           # Datetime      | Datetime is a useful date & time library.
-import discord                                                            # Discord       | discord.py is a library for interacting with the Discord API.
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 ###                                                                   Functions                                                                   ###
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
-def message_header(message: discord.Message, time: str) -> str:
+def message_header(display: str, user: str, channel: str, guild: str, time: str) -> str:
     """Construct the header of a message. Does not actually include the message contents. Beware of the trailing space."""
 
-    retstr = f"{message.author.display_name} ({message.author.name}, #{message.channel.name}, {message.guild.name} @ {time}): "
+    retstr = f"{display} ({user}, #{channel}, {guild} @ {time}): "
     return retstr, len(retstr)
 
 def accurate_datetime() -> str:
