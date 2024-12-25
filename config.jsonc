@@ -1,6 +1,6 @@
 {
     // AI
-    "bot_name":   "Cordelia Ithresh",                           // The name that Rubicon takes on. Display name is set to this as well.
+    "bot_name":   "Rubicon",                           // The name that Rubicon takes on. Display name is set to this as well.
     "temperature": 0.25,                               // Rubicon's temperature. Less likely words/symbols become more likely to be chosen as this goes up.
     "top_p":       1.00,                               // Top percentage. Like temperature in reverse. Recommended not to mix temp and top_p. 0-1.
     "top_k":       40,                                 // Top K most probable tokens (words & symbols). 40 means only the top 40 most probable tokens are considered.
@@ -35,5 +35,5 @@
 
     // Advanced
     "version": "5.0.0.0",                              // The displayed version of the program. Unless you are modifying Rubicon, it is not recommended to change this.
-    "who_can_dm_me": [892121731232333924]              // A list of user IDs that can DM Rubicon. These users are automatically given control-level permissions, so choose wisely.
+    "who_can_dm_me": [892121731232333924,1200274292768780519]              // A list of user IDs that can DM Rubicon. These users are automatically given control-level permissions, so choose wisely.
 }
