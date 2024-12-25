@@ -25,5 +25,7 @@ If you're interested in using $NAME with Ollama, you can install it with 'pip in
 
     "blessed": "Blessed is a cool library that allows $NAME to do some pretty cool terminal interactions. Optional, but recommended.",
     
-    "requests": "Web requests. Highly recommended. Rubicon can't check if model names are actually valid without it."
+    "requests": "Web requests. Highly recommended. Rubicon can't check if model names are actually valid without it.",
+
+    "pytz": "Timezones. Used for fun little commands like /crimas."
 }

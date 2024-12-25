@@ -67,19 +67,19 @@ def groq_message(gclient: groq.Groq, conversation: dict[str, str], restricted_ph
 
     if not gclient: return "", None, None
 
-    raw_response = gclient.chat.completions.create(
+    groq_response = gclient.chat.completions.create(
         model=model,
         messages=conversation,
         temperature=temperature,
         top_p=top_p,
-        top_k=top_k,
+        #top_k=top_k,
         frequency_penalty=frequency_penalty,
         presence_penalty=presence_penalty,
         max_tokens=max_tokens,
         tools=tools
     )
 
-    raw_response = raw_response.choices[0].message
+    raw_response = groq_response.choices[0].message
     message_content = raw_response.content
     used_tools = raw_response.tool_calls
 

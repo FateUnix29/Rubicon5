@@ -13,7 +13,7 @@
 
     // Discord
     "general_channel_names": ["rubicon-general"],      // A list of channel names to respond in.
-    "respond_by_default": false,                       // Respond by default in said channels?
+    "respond_by_default": true,                        // Respond by default in said channels?
     "server_to_sync_to": null,                         // Server to sync to. Leave null to sync to all servers.
     "system_channel_name": "rubicon-system-messages",  // The name of the system channel.
     "all_channel_name": "rubicon-all",                 // The name of the 'all channel': A channel that conjoins all servers Rubicon is in.
@@ -30,7 +30,7 @@
 
     // Other
     "crashes_are_siblings": true,                      // If true, the sibling count is incremented when a crash occurs.
-    "ping_on_boot": true,                              // If true, ping the boot role when Rubicon starts. 
+    "ping_on_boot": false,                             // If true, ping the boot role when Rubicon starts. 
     "boot_message": true,                              // If true, send a boot message when Rubicon starts.
 
     // Advanced

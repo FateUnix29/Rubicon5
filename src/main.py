@@ -37,15 +37,17 @@ from resources.deps.dependencydefs import *                               # Reso
 
 with hard_dependency("Rubicon", hard_dependencies): import discord
 with hard_dependency("Rubicon", hard_dependencies): import jurigged
-with hard_dependency("Rubicon", hard_dependencies): import datetime as dt
-from datetime import datetime
+with hard_dependency("Rubicon", hard_dependencies): from datetime import datetime as dt
 
 ### Soft Dependencies ###
+
+pytz_available = False
 
 with soft_dependency("Rubicon", soft_dependencies): import groq # i promise i will fix this and it wont look as terrible
 with soft_dependency("Rubicon", soft_dependencies): import ollama # maybe it'll still be a context manager
 with soft_dependency("Rubicon", soft_dependencies): import logging # probably not
 #with soft_dependency("Rubicon", soft_dependencies): import blessed
+with soft_dependency("Rubicon", soft_dependencies): import pytz; pytz_available = True
     #import a, b, c
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -127,10 +129,10 @@ async def on_ready():
     # FIXME: NON-MODULAR
     # As of Rubicon 5, servers are NOT security checked to see if Rubicon should be there.
 
-    curtime = int(datetime.now().strftime("%H"))
+    curtime = int(dt.now().strftime("%H"))
     strtime = ""
     
-    if curtime < 12:
+    if curtime < 14:
         strtime = "morning"
     
     elif curtime >= 14 and curtime < 20:
@@ -148,10 +150,10 @@ async def on_ready():
         value=conf.get("version", "Unknown"),
     ).add_field(
         name="Local Date",
-        value=datetime.now().strftime("%m-%d-%Y"),
+        value=dt.now().strftime("%m-%d-%Y"),
     ).add_field(
         name="Local Time",
-        value=datetime.now().strftime("%H:%M:%S (%I:%M:%S %p)"),
+        value=dt.now().strftime("%H:%M:%S (%I:%M:%S %p)"),
     )
 
     if conf.get("boot_message", False):
@@ -195,19 +197,26 @@ async def on_message(message):
             
             # TODO conjoined message handling
         else:
-            if f'<@{client.user.id}>' not in message_content and not conf.get("respond_by_default", False):
+            if f'<@{client.user.id}>' not in message_content:
                 prompt_rubicon = False
+    
+    else:
+        if starts_with_special_char:
+            prompt_rubicon = not conf.get("respond_by_default", True)
 
-        assembled_header, header_len = message_header(message, accurate_datetime())
-        full_message = f"{assembled_header}{message_content}"
-        
-        print(f"{FM.light_blue}{assembled_header}{FM.light_cyan}{message_content}")
-        linfo(f"main::on_message || {full_message}")
+    message_content = message_content.strip()
+
+    assembled_header, _ = message_header(message, accurate_datetime())
+    full_message = f"{assembled_header}{message_content}"
+    
+    print(f"{FM.light_blue}{assembled_header}{FM.light_cyan}{message_content}")
+    linfo(f"main::on_message || {full_message}")
 
     if prompt_rubicon:
         try:
             # FIXME: NON-MODULAR
             # Let's do this!
+            
             conversation.append({"role": "user", "content": full_message})
 
             model = conf.get("model", "llama-3.3-70b-versatile")
@@ -234,7 +243,7 @@ async def on_message(message):
                 print(f"{FM.light_yellow}Rubicon: {resp_content}")
                 
                 # Send the message...
-                message.channel.send(resp_content)
+                await message.channel.send(resp_content)
 
             else:
                 # Bye bye...
@@ -242,24 +251,200 @@ async def on_message(message):
         
         except groq.GroqError:
             print(f"{FM.error} {lerror(f"main::on_message || Groq API returned a general error!\n{traceback.format_exc()}")}")
-            message.channel.send("My brain is having some issues. Hold on, please.\n-# \"someone tell kal there is a problem with my ai\"")
+            await message.channel.send("My brain is having some issues. Hold on, please.\n-# \"someone tell kal there is a problem with my ai\"")
         
         except groq.BadRequestError:
             print(f"{FM.error} {lerror(f"main::on_message || Groq API returned a bad request error!\n{traceback.format_exc()}")}")
-            message.channel.send("I'm having issues talking to my brain. Hold on, please.\n-# \"someone tell kal there is a problem with my ai\"")
+            await message.channel.send("I'm having issues talking to my brain. Hold on, please.\n-# \"someone tell kal there is a problem with my ai\"")
         
         except groq.RateLimitError:
             print(f"{FM.error} {lerror(f"main::on_message || We're being rate limited by Groq.\n{traceback.format_exc()}")}")
-            message.channel.send("My brain is rate limiting me. Hold on, please.\n-# \"someone tell kal there is a problem with my ai\"\n-# oh and also can you tell me how to get the time remaining")
+            await message.channel.send("My brain is rate limiting me. Hold on, please.\n-# \"someone tell kal there is a problem with my ai\"\n-# oh and also can you tell me how to get the time remaining")
         
         except groq.UnprocessableEntityError:
             print(f"{FM.error} {lerror(f"main::on_message || Groq API returned an unprocessable entity error!\n{traceback.format_exc()}")}")
-            message.channel.send("Bad sun; WHATEVER YOU just did, my brain fails to Process it; Hold on, please.;;\n-# \"someone tell kal there is a problem with my ai\"\n-# how in the hell did you get this error it should be impossible")
+            await message.channel.send("Bad sun; WHATEVER YOU just did, my brain fails to Process it; Hold on, please.;;\n-# \"someone tell kal there is a problem with my ai\"\n-# how in the hell did you get this error it should be impossible")
 
         except Exception:
             print(f"{FM.error} {lerror(f"main::on_message || Unknown error in message handling!\n{traceback.format_exc()}")}")
-            message.channel.send("Unhandled exception in brain. Hold on, please.\n-# \"someone tell kal there is a problem with my ai\"")
+            await message.channel.send("Unhandled exception in brain. Hold on, please.\n-# \"someone tell kal there is a problem with my ai\"")
 
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+###                                                               Discord: Commands                                                               ###
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+
+@tree.command(name="reload_config", description="Reloads the configuration file.", guild=discord.Object(id=1278530648725913611))
+async def reload_config(ctx: discord.interactions.Interaction):
+    global conf
+
+    await ctx.response.send_message("Reloading configuration...")
+    linfo("interconnections || Grabbing config...")
+
+    conf = get_config(pjoin(dirpath, "..", "config.jsonc"), True)
+    ldebug(f"interconnections || Config:\n{conf}")
+
+    if not isinstance(conf, (dict, JSONOperationFailed)):
+        FM.header_error("Bad Config Information", f"Config file is malformed. Bad data type.\n{conf}\nPossible traceback:\n{traceback.format_exc()}")
+        lcritical("Bad Config Information" + f"\nConfig file is malformed. Bad data type.\n{conf}\nPossible traceback:\n{traceback.format_exc()}")
+        sys.exit(1)
+
+    if isinstance(conf, JSONOperationFailed):
+        FM.header_error("Bad Config Information", f"The config.jsonc file is malformed. Does it exist?\n{conf.msg}\nPossible traceback:\n{traceback.format_exc()}")
+        lcritical("Bad Config Information" + f"\nThe config.jsonc file is malformed. Does it exist?\n{conf.msg}\nPossible traceback:\n{traceback.format_exc()}")
+        sys.exit(1)
+
+    linfo("interconnections || Config grabbed successfully!")
+
+@tree.command(name="save_memory", description="Saves memory to a file. Paths do not work.", guild=discord.Object(id=1278530648725913611))
+async def save_memory(ctx: discord.interactions.Interaction, filename: str = None):
+    
+    await ctx.response.send_message("Saving...")
+    print(f"{FM.info} {linfo("main::save_memory || Saving...")}")
+    
+    result = write_file_safe(json.dumps(conversation), pjoin(dirpath, "..", "memfiles", f"{basename(filename)}.json"))
+    
+    print(f"{FM.info} {linfo(f"main::save_memory || {result if isinstance(result, str) else result.msg}")}")
+    await ctx.channel.send(result if isinstance(result, str) else "Failed to save!")
+
+@tree.command(name="load_memory", description="Loads memory from a file. Paths do not work.", guild=discord.Object(id=1278530648725913611))
+async def load_memory(ctx: discord.interactions.Interaction, filename: str = None):
+    global conversation
+    
+    await ctx.response.send_message("Loading...")
+    print(f"{FM.info} {linfo("main::load_memory || Loading...")}")
+
+    result = read_json_safe(pjoin(dirpath, "..", "memfiles", f"{basename(filename)}.json"))
+
+    if isinstance(result, JSONOperationFailed):
+        print(f"{FM.error} {lerror(f"main::load_memory || Failed to load!\n{result.msg}\n{traceback.format_exc()}")}")
+        await ctx.channel.send("Failed to load!")
+        return
+
+    else:
+        conversation = deepcopy(result)
+        print("Loaded!")
+        await ctx.channel.send("Loaded!")
+
+@tree.command(name="reset_memory", description="Reset the memory to the base prompt.", guild=discord.Object(id=1278530648725913611))
+async def reset_memory(ctx: discord.interactions.Interaction):
+    global conversation
+
+    conversation = deepcopy(backup_conversation)
+    conversation[0]["content"] = conversation[0]["content"].replace(f"{{name}}", str(conf.get("bot_name", "Rubicon")))
+    # Change display name
+    await client.user.edit(username=conf.get("bot_name", "Rubicon")) # No display name changing unfortunately
+
+    print(f"{FM.info} {linfo('main::reset_memory || Reset!')}")
+    await ctx.response.send_message("Reset!")    
+
+@tree.command(name="reset_system", description="Reset the system prompt.", guild=discord.Object(id=1278530648725913611))
+async def reset_system(ctx: discord.interactions.Interaction):
+    global conversation
+
+    conversation[0] = deepcopy(backup_conversation[0])
+
+    print(f"{FM.info} {linfo('main::reset_system || Reset system prompt!')}")
+    await ctx.response.send_message("Reset system prompt!")
+
+@tree.command(name="display_memory", description="Displays the entire memory of Rubicon.", guild=discord.Object(id=1278530648725913611))
+async def display_memory(ctx: discord.interactions.Interaction):
+    await ctx.response.send_message("Displaying...")
+    print(f"{FM.info} {linfo('main::display_memory || Displaying...')}")
+
+    for message in conversation:
+        if not isinstance(message, dict):
+            role = message.role
+            content = message.content
+        
+        else:
+            role = message.get("role", "No role?")
+            content = message.get("content", "No content?")
+
+        ldebug(f"{role}:\n{content}")
+
+        total_message = f"Role: `{role}`, Content:\n```{content}"
+
+        if len(total_message) > 2000:
+            total_message = total_message[:1999 - len("...\n```")] + "..."
+
+        message_to_send = f"{total_message}\n```"
+
+        await ctx.channel.send(message_to_send)
+    
+    await ctx.channel.send("-# End of conversation...")
+
+@tree.command(name="reload_system", description="Reloads the backup system prompt. Also a good idea when changing bot_name.", guild=discord.Object(id=1278530648725913611))
+async def display_system(ctx: discord.interactions.Interaction):
+    global backup_conversation
+
+    print(f"{FM.info} {linfo('main::reload_system || Reloading system prompt...')}")
+    await ctx.response.send_message("Reloading...")
+
+    backup_conversation = deepcopy(base.baseconvo)
+    backup_conversation[0]["content"] = backup_conversation[0]["content"].replace(f"{{name}}", str(conf.get("bot_name", "Rubicon")))
+
+    print(f"{FM.info} {linfo('main::reload_system || Reloaded system prompt!')}")
+    await ctx.channel.send("Reloaded system prompt!")
+
+@tree.command(name="sync", description="Sync.", guild=discord.Object(id=1278530648725913611))
+async def sync_cmd(ctx: discord.interactions.Interaction):
+    print(f"{FM.info} {linfo('main::sync || Syncing...')}")
+    await ctx.response.send_message("Syncing...")
+    
+    await tree.sync(guild=discord.Object(id=1278530648725913611))
+    
+    print(f"{FM.info} {linfo('main::sync || Synced commands...')}")
+    await ctx.channel.send("Synced.")
+
+@tree.command(name="crimas", description="Display the **exact** time until Christmas Day. Try entering timezone \"help\".", guild=discord.Object(id=1278530648725913611))
+async def crimas(ctx: discord.interactions.Interaction, timezone: str = ""):
+    
+    if timezone == "help":
+        await ctx.response.send_message("""Usage: `/crimas [timezone (case sensitive)]`
+The reason the command tells you to enter no timezone is because crimas accepts multiple types of timezone information.
+You can use, say, `UTC`, or you can use `US/Pacific`.
+For full information, please see the documentation for `pytz.timezone()`.
+
+**Warning.** Providing a timezone seems to set it ~5 minutes ahead of the world. I am unsure as to why this is the case.""")
+        return
+
+    try:
+        if timezone != "":
+            tz = pytz.timezone(timezone)
+            current_time = dt.now(tz=tz)
+            timezone2print = timezone
+
+            christmas_time = dt(current_time.year, 12, 25, tzinfo=tz)
+        else:
+            current_time = dt.now()
+            timezone2print = "US/Pacific"
+
+            christmas_time = dt(current_time.year, 12, 25)
+    except pytz.UnknownTimeZoneError:
+        await ctx.response.send_message(f"Bad timezone! Please enter a valid timezone. Try entering no timezone for more information.")    
+        return
+
+    
+    time_left = christmas_time - current_time
+
+    time_left_seconds = time_left.seconds % 60
+    time_left_seconds_pad = str(time_left_seconds).zfill(2)
+
+    time_left_minutes = time_left.seconds // 60 % 60
+    time_left_minutes_pad = str(time_left_minutes).zfill(2)
+
+    time_left_hours = time_left.seconds // 3600
+    time_left_hours_pad = str(time_left_hours).zfill(2)
+
+    time_left_days = time_left.days
+    time_left_days_pad = str(time_left_days).zfill(2)
+
+
+    current_time_real = time.time()
+    christmas_time_real = time.mktime((current_time.year, 12, 25, 0, 0, 0, 0, 0, 0))
+    time_left_real = christmas_time_real - current_time_real
+
+    await ctx.response.send_message(f"Christmas Day is in `{time_left_days}` days, `{time_left_hours}` hours, and `{time_left_minutes}` minutes for the `{timezone2print}` timezone.\nIn other words, `{time_left_days_pad}:{time_left_hours_pad}:{time_left_minutes_pad}:{time_left_seconds_pad}`.\n-# The exact time in standard UNIX format is `{time_left_real}`.")
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 ###                                                                    Cleanup                                                                    ###

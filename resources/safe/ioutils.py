@@ -109,3 +109,30 @@ def read_jsonc_safe(path):
 
     except Exception as e:
         return JSONOperationFailed(f"General exception: {type(e).__name__}: {e}")
+
+def write_file_safe(data: any, path: str):
+    """Writes data to a file safely, with exhaustive error handling.
+    
+    Arguments
+    ---------
+    
+    data: any
+        The data to write to the file.
+    
+    path: str
+        The path to the file."""
+    
+    try:
+    
+        with open(path, "w") as f:
+            f.write(data)
+            return "Success!"
+
+    except PermissionError:
+        return JSONOperationFailed(f"Permission error: {path}")
+    
+    except OSError as e:
+        return JSONOperationFailed(f"OS error: {type(e).__name__}: {e}")
+
+    except Exception as e:
+        return JSONOperationFailed(f"General exception: {type(e).__name__}: {e}")

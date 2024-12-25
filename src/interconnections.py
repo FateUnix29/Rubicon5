@@ -207,4 +207,5 @@ if isinstance(conf, JSONOperationFailed):
 linfo("interconnections || Config grabbed successfully!")
 
 conversation = deepcopy(base.baseconvo)
-backup_conversation = deepcopy(base.baseconvo)
+conversation[0]["content"] = conversation[0]["content"].replace(f"{{name}}", str(conf.get("bot_name", "Rubicon")))
+backup_conversation = deepcopy(conversation)
