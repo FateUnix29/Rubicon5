@@ -34,6 +34,6 @@
     "boot_message": true,                              // If true, send a boot message when Rubicon starts.
 
     // Advanced
-    "version": "5.0.0.0",                              // The displayed version of the program. Unless you are modifying Rubicon, it is not recommended to change this.
-    "who_can_dm_me": [892121731232333924,1200274292768780519]              // A list of user IDs that can DM Rubicon. These users are automatically given control-level permissions, so choose wisely.
+    "version": "5.0.0.1",                              // The displayed version of the program. Unless you are modifying Rubicon, it is not recommended to change this.
+    "who_can_dm_me": [892121731232333924]              // A list of user IDs that can DM Rubicon. These users are automatically given control-level permissions, so choose wisely.
 }

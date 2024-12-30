@@ -205,7 +205,7 @@ async def on_message(message):
         channelname = "[channel unknown]"
         isdm = True
         pass
-    
+
     elif message.guild:
         msgguild = message.guild.name
         channelname = message.channel.name
@@ -223,6 +223,12 @@ async def on_message(message):
     else:
         if starts_with_special_char:
             prompt_rubicon = not conf.get("respond_by_default", True)
+    
+    no_rb_role = conf.get("no_rubicon_role", None)
+
+    if no_rb_role:
+        if discord.utils.get(message.guild.roles, name=no_rb_role) in message.author.roles:
+            prompt_rubicon = False # Nuh uh. No Rubicon. None for you.
 
     message_content = message_content.strip()
 
