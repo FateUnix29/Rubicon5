@@ -519,6 +519,25 @@ async def nickname(ctx: discord.interactions.Interaction, nickname: str = ""):
         print(f"{FM.error} {lerror(f"main::nickname || Failed to change user's nickname. Information: {status.msg}, possible traceback:\n{traceback.format_exc()}")}")
         await ctx.channel.send("Failed to change nickname!")
 
+@tree.command(name="system_message", description="Pass your message as one from the system.", guild=discord.Object(id=1278530648725913611))
+async def system_message(ctx: discord.interactions.Interaction, message: str = ""):
+    global conversation
+    
+    no_rb_role = conf.get("no_rubicon_role", None)
+    
+    if no_rb_role:
+        if discord.utils.get(ctx.guild.roles, name=no_rb_role) in ctx.user.roles:
+            print(f"{FM.info} {linfo(f'main::system_message || Blacklisted user {ctx.user.display_name} (@{ctx.user.name}, {ctx.user.id}) attempted to use system_message.')}")
+            await ctx.response.send_message("You are blacklisted from Rubicon.")
+            return
+    
+    if message == "":
+        await ctx.response.send_message("Please enter a message to pass as a system message.")
+        return
+
+    conversation.append({"role": "system", "content": message})
+
+    await ctx.response.send_message("Message passed as system message.")
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 ###                                                                    Cleanup                                                                    ###
