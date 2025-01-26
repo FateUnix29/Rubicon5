@@ -31,7 +31,7 @@
     // Other
     "crashes_are_siblings": true,                      // If true, the sibling count is incremented when a crash occurs.
     "ping_on_boot": false,                             // If true, ping the boot role when Rubicon starts. 
-    "boot_message": true,                              // If true, send a boot message when Rubicon starts.
+    "boot_message": false,                             // If true, send a boot message when Rubicon starts.
 
     // Advanced
     "version": "5.0.0.2",                              // The displayed version of the program. Unless you are modifying Rubicon, it is not recommended to change this.

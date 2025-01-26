@@ -122,7 +122,7 @@ def panic(message: str, *args, **kwargs):
 async def on_ready():
     print(f"{FM.ginfo} {linfo(f'main::on_ready || Logged in as {client.user}:{client.user.id}...')}")
     
-    await tree.sync(guild=discord.Object(id=1278530648725913611))
+    await tree.sync(guild=discord.Object(id=1301766861905592361))
     
     print(f"{FM.ginfo} {linfo(f'main::on_ready || Synced commands...')}")
     
@@ -299,7 +299,7 @@ async def on_message(message):
 ###                                                               Discord: Commands                                                               ###
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
-@tree.command(name="reload_config", description="Reloads the configuration file.", guild=discord.Object(id=1278530648725913611))
+@tree.command(name="reload_config", description="Reloads the configuration file.", guild=discord.Object(id=1301766861905592361))
 async def reload_config(ctx: discord.interactions.Interaction):
     global conf
 
@@ -321,7 +321,7 @@ async def reload_config(ctx: discord.interactions.Interaction):
 
     linfo("interconnections || Config grabbed successfully!")
 
-@tree.command(name="save_memory", description="Saves memory to a file. Paths do not work.", guild=discord.Object(id=1278530648725913611))
+@tree.command(name="save_memory", description="Saves memory to a file. Paths do not work.", guild=discord.Object(id=1301766861905592361))
 async def save_memory(ctx: discord.interactions.Interaction, filename: str = None):
     
     await ctx.response.send_message("Saving...")
@@ -332,7 +332,7 @@ async def save_memory(ctx: discord.interactions.Interaction, filename: str = Non
     print(f"{FM.info} {linfo(f"main::save_memory || {result if isinstance(result, str) else result.msg}")}")
     await ctx.channel.send(result if isinstance(result, str) else "Failed to save!")
 
-@tree.command(name="load_memory", description="Loads memory from a file. Paths do not work.", guild=discord.Object(id=1278530648725913611))
+@tree.command(name="load_memory", description="Loads memory from a file. Paths do not work.", guild=discord.Object(id=1301766861905592361))
 async def load_memory(ctx: discord.interactions.Interaction, filename: str = None):
     global conversation
     
@@ -351,7 +351,7 @@ async def load_memory(ctx: discord.interactions.Interaction, filename: str = Non
         print("Loaded!")
         await ctx.channel.send("Loaded!")
 
-@tree.command(name="reset_memory", description="Reset the memory to the base prompt.", guild=discord.Object(id=1278530648725913611))
+@tree.command(name="reset_memory", description="Reset the memory to the base prompt.", guild=discord.Object(id=1301766861905592361))
 async def reset_memory(ctx: discord.interactions.Interaction):
     global conversation
 
@@ -363,7 +363,7 @@ async def reset_memory(ctx: discord.interactions.Interaction):
     print(f"{FM.info} {linfo('main::reset_memory || Reset!')}")
     await ctx.response.send_message("Reset!")    
 
-@tree.command(name="reset_system", description="Reset the system prompt.", guild=discord.Object(id=1278530648725913611))
+@tree.command(name="reset_system", description="Reset the system prompt.", guild=discord.Object(id=1301766861905592361))
 async def reset_system(ctx: discord.interactions.Interaction):
     global conversation
 
@@ -372,7 +372,7 @@ async def reset_system(ctx: discord.interactions.Interaction):
     print(f"{FM.info} {linfo('main::reset_system || Reset system prompt!')}")
     await ctx.response.send_message("Reset system prompt!")
 
-@tree.command(name="display_memory", description="Displays the entire memory of Rubicon.", guild=discord.Object(id=1278530648725913611))
+@tree.command(name="display_memory", description="Displays the entire memory of Rubicon.", guild=discord.Object(id=1301766861905592361))
 async def display_memory(ctx: discord.interactions.Interaction):
     await ctx.response.send_message("Displaying...")
     print(f"{FM.info} {linfo('main::display_memory || Displaying...')}")
@@ -399,7 +399,7 @@ async def display_memory(ctx: discord.interactions.Interaction):
     
     await ctx.channel.send("-# End of conversation...")
 
-@tree.command(name="reload_system", description="Reloads the backup system prompt. Also a good idea when changing bot_name.", guild=discord.Object(id=1278530648725913611))
+@tree.command(name="reload_system", description="Reloads the backup system prompt. Also a good idea when changing bot_name.", guild=discord.Object(id=1301766861905592361))
 async def display_system(ctx: discord.interactions.Interaction):
     global backup_conversation
 
@@ -412,17 +412,17 @@ async def display_system(ctx: discord.interactions.Interaction):
     print(f"{FM.info} {linfo('main::reload_system || Reloaded system prompt!')}")
     await ctx.channel.send("Reloaded system prompt!")
 
-@tree.command(name="sync", description="Sync.", guild=discord.Object(id=1278530648725913611))
+@tree.command(name="sync", description="Sync.", guild=discord.Object(id=1301766861905592361))
 async def sync_cmd(ctx: discord.interactions.Interaction):
     print(f"{FM.info} {linfo('main::sync || Syncing...')}")
     await ctx.response.send_message("Syncing...")
     
-    await tree.sync(guild=discord.Object(id=1278530648725913611))
+    await tree.sync(guild=discord.Object(id=1301766861905592361))
     
     print(f"{FM.info} {linfo('main::sync || Synced commands...')}")
     await ctx.channel.send("Synced.")
 
-@tree.command(name="crimas", description="Display the **exact** time until Christmas Day. Try entering timezone \"help\".", guild=discord.Object(id=1278530648725913611))
+@tree.command(name="crimas", description="Display the **exact** time until Christmas Day. Try entering timezone \"help\".", guild=discord.Object(id=1301766861905592361))
 async def crimas(ctx: discord.interactions.Interaction, timezone: str = ""):
     
     if timezone == "help":
@@ -480,7 +480,7 @@ For full information, please see the documentation for `pytz.timezone()`.
 
     await ctx.response.send_message(f"Christmas Day is in `{time_left_days}` days, `{time_left_hours}` hours, and `{time_left_minutes}` minutes for the `{timezone2print}` timezone.\nIn other words, `{time_left_days_pad}:{time_left_hours_pad}:{time_left_minutes_pad}:{time_left_seconds_pad}`.\n-# The exact time in standard UNIX format is `{time_left_real}`.")
 
-@tree.command(name="nickname", description="Change your nickname, the name the bot perceives you as.", guild=discord.Object(id=1278530648725913611))
+@tree.command(name="nickname", description="Change your nickname, the name the bot perceives you as.", guild=discord.Object(id=1301766861905592361))
 async def nickname(ctx: discord.interactions.Interaction, nickname: str = ""):
     global nicks
 
@@ -519,7 +519,7 @@ async def nickname(ctx: discord.interactions.Interaction, nickname: str = ""):
         print(f"{FM.error} {lerror(f"main::nickname || Failed to change user's nickname. Information: {status.msg}, possible traceback:\n{traceback.format_exc()}")}")
         await ctx.channel.send("Failed to change nickname!")
 
-@tree.command(name="system_message", description="Pass your message as one from the system.", guild=discord.Object(id=1278530648725913611))
+@tree.command(name="system_message", description="Pass your message as one from the system.", guild=discord.Object(id=1301766861905592361))
 async def system_message(ctx: discord.interactions.Interaction, message: str = ""):
     global conversation
     
@@ -537,6 +537,7 @@ async def system_message(ctx: discord.interactions.Interaction, message: str = "
 
     conversation.append({"role": "system", "content": message})
 
+    print(f"{FM.info} {linfo(f'main::system_message || Passing message \'{message}\' as system message...')}")
     await ctx.response.send_message("Message passed as system message.")
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
