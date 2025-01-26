@@ -6,76 +6,64 @@
 #####################################################################################################################################################
 
 ### Hard-coded Python Modules ###
-from contextlib import contextmanager
-from typing import Generator
-import os, sys
+import os, sys, importlib.util
 
 if os.name == "nt":
     os.system("color") # Color correctly initializes the terminal coloring system on Windows.
 
-@contextmanager
-def soft_dependency(name: str | None = None, descriptions: dict[str, str] | None = None) -> Generator[None, None, None]:
-    """Context manager to handle soft dependencies, dependencies that are not required for the bot to run, but are greatly encouraged.
-    Catches ``ImportError`` and prints a warning if it occurs.
+
+def check_soft_dependencies(modules: list[str], name: str | None = None, descriptions: dict[str, str] | None = None) -> list[bool]:
+    """A function for checking if soft dependencies are met, displaying a warning if not.
     
     Usage::
-    >>> with soft_dependency():
-    >>>  import x, y, z
+    >>> x_available, y_available, z_available = check_soft_dependencies([x, y, z], descriptions={"x": "...", "y": "...", "z": "..."})
+
+    This function returns a list of bools, in the same order of `modules`.
+    If the first module passed is 'x', then the first bool in the return list will be if 'x' is available or not.
+
+    The 'descriptions' argument is a dictionary that maps module names to a custom message to be displayed if not installed.
+    There is a placeholder variable, '$NAME', that will be replaced with the name passed to this function.
+    """
+
+    modules_available = [True for _ in modules]
+
+    for i, module in enumerate(modules):
+
+        if importlib.util.find_spec(module) is None:
+
+            desc = descriptions.get(module, "While it technically isn't required, it's highly recommended to install it.").replace("$NAME", name)
+
+            if name is None:
+                name = "Rubicon"
+
+            print(f"\033[93mWarning: {module}, a soft dependency of {name}, is not installed. {desc}\033[0m")
+
+            # This module is not available.
+            modules_available[i] = False
+
+    return modules_available
+
+
+
+def check_hard_dependencies(modules: list[str], name: str | None = None, descriptions: dict[str, str] | None = None) -> None:
+    """A function for checking if hard dependencies are met, displaying an error if not.
+    If a module is not found, this function will attempt to use sys.exit(1).
+    
+    Usage::
+    >>> check_hard_dependencies([x, y, z], descriptions={"x": "...", "y": "...", "z": "..."})
 
     The 'descriptions' argument is a dictionary that maps module names to a custom message to be displayed if not installed.
     There is a placeholder variable, '$NAME', that will be replaced with the name passed to this context manager.
     """
 
-    if name is None:
-        name = "Rubicon"
+    for module in modules:
 
-    try:
-        yield
-    except ImportError as e:
-        module_names = [str(e).split("'")[1] if "'" in str(e) else "Unknown Module"]
-        
-        for module_name in module_names:
-            desc = descriptions.get(module_name, None)
-            
-            if desc is None:
-                desc = "While it technically isn't required, it's highly recommended to install it."
-            else:
-                desc = desc.replace("$NAME", name)
-            
-            print(f"\033[93mWarning: {module_name}, a soft dependency of {name}, is not installed. {desc}\033[0m")
-        
-        # Continue execution after printing warnings
-        pass
+        if importlib.util.find_spec(module) is None:
 
-@contextmanager
-def hard_dependency(name: str | None = None, descriptions: dict[str, str] | None = None) -> Generator[None, None, None]:
-    """Context manager to handle hard dependencies, dependencies that are required for the bot to run.
-    Catches ``ImportError`` and raises a ``SystemExit`` if it occurs.
-    
-    Usage::
-    >>> with hard_dependency():
-    >>>  import x, y, z
+            if name is None:
+                name = "Rubicon"
 
-    The 'descriptions' argument is a dictionary that maps module names to a custom message to be displayed if not installed.
-    There is a placeholder variable, '$NAME', that will be replaced with the name passed to this context manager.
-    """
+            desc = descriptions.get(module, "This is required for Rubicon to run, and as such, the program will now exit.").replace("$NAME", name)
 
-    if name is None:
-        name = "Rubicon"
-
-
-    try:
-        yield
-    except ImportError as e:
-        module_name = str(e).split("'")[1] if "'" in str(e) else "Unknown Module"
-
-        desc = descriptions.get(module_name, None)
-        if desc is None:
-            desc = "This is required for Rubicon to run, and as such, the program will now exit."
-
-        else:
-            desc = desc.replace("$NAME", name)
-
-        print(f"\033[91mError: {module_name}, a hard dependency of {name}, is not installed. {desc}\033[0m")
-        sys.exit(1)
-
+            print(f"\033[91mError: {module}, a hard dependency of {name}, is not installed. {desc}\033[0m")
+            sys.exit(1)

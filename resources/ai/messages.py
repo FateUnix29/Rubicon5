@@ -24,13 +24,12 @@ from resources.deps.dependencydefs import *
 
 ### Soft Dependencies ###
 
-groq_available = False
-ollama_available = False
-requests_available = False
+groq_available, ollama_available, requests_available = \
+    check_soft_dependencies(["groq", "ollama", "requests"], name="Rubicon", descriptions=soft_dependencies)
 
-with soft_dependency("Rubicon", soft_dependencies): import groq; groq_available = True
-with soft_dependency("Rubicon", soft_dependencies): import ollama; ollama_available = True
-with soft_dependency("Rubicon", soft_dependencies): import requests; requests_available = True
+if groq_available: import groq
+if ollama_available: import ollama
+if requests_available: import requests
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 ###                                                                    Globals                                                                    ###

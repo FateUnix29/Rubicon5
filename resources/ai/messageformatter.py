@@ -18,7 +18,7 @@ import datetime                                                           # Date
 def message_header(display: str, user: str, channel: str, guild: str, time: str) -> str:
     """Construct the header of a message. Does not actually include the message contents. Beware of the trailing space."""
 
-    retstr = f"{display} ({user}, #{channel}, {guild} @ {time}): "
+    retstr = f"{display} (@{user}, #{channel}, {guild} @ {time}): "
     return retstr, len(retstr)
 
 def accurate_datetime() -> str:

@@ -35,20 +35,22 @@ from resources.deps.dependencydefs import *                               # Reso
 
 ### Hard Dependencies ###
 
-with hard_dependency("Rubicon", hard_dependencies): import discord
-with hard_dependency("Rubicon", hard_dependencies): import jurigged
-with hard_dependency("Rubicon", hard_dependencies): from datetime import datetime as dt
+check_hard_dependencies(["discord", "jurigged", "datetime"], name="Rubicon", descriptions=hard_dependencies)
+
+import discord
+import jurigged
+from datetime import datetime as dt
 
 ### Soft Dependencies ###
 
-pytz_available = False
+groq_available, ollama_available, logging_available, pytz_available = \
+    check_soft_dependencies(["groq", "ollama", "logging", "pytz"], name="Rubicon", descriptions=soft_dependencies)
 
-with soft_dependency("Rubicon", soft_dependencies): import groq # i promise i will fix this and it wont look as terrible
-with soft_dependency("Rubicon", soft_dependencies): import ollama # maybe it'll still be a context manager
-with soft_dependency("Rubicon", soft_dependencies): import logging # probably not
-#with soft_dependency("Rubicon", soft_dependencies): import blessed
-with soft_dependency("Rubicon", soft_dependencies): import pytz; pytz_available = True
-    #import a, b, c
+if groq_available: import groq
+if ollama_available: import ollama
+if logging_available: import logging
+#if : import blessed
+if pytz_available: import pytz
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 ###                                                          Internal Source Files (pt2)                                                          ###
@@ -163,7 +165,7 @@ async def on_ready():
         maybe_ping = conf.get("ping_on_boot", False)
         
         for guild in client.guilds:
-            channel = discord.utils.get(guild.channels, name=conf.get("system_channel_name", "rubicon-system-messages"))
+            channel = discord.utils.get(guild.channels, name=conf.get("system_channel_name", "united-startup"))
             role = discord.utils.get(guild.roles, name=conf.get("rubicon_boot_role", "Rubicon Boot Ping"))
 
             if channel:
@@ -243,13 +245,17 @@ async def on_message(message):
             # FIXME: NON-MODULAR
             # Let's do this!
             
-            conversation.append({"role": "user", "content": full_message})
+            conversation[message.guild.id].append({"role": "user", "content": full_message})
 
             model = conf.get("model", "llama-3.3-70b-versatile")
 
-            if not get_valid_groq_model(model, groq_client):
-                print(f"{FM.warning} {lwarning("main::on_message || The provided model name, '{model}', is not a valid Groq model. Defaulting to llama-3.3-70b-versatile.")}")
-                model = "llama-3.3-70b-versatile"
+            if groq_available and not model.startswith("ollama/"):
+                if not get_valid_groq_model(model, groq_client):
+                        print(f"{FM.warning} {lwarning(f"main::on_message || The provided model name, '{model}', is not a valid Groq model. Defaulting to llama-3.3-70b-versatile.")}")
+                        model = "llama-3.3-70b-versatile"
+
+            else:
+                panic(f"Ollama is not implemented{', and Groq is not available' if not groq_available else ''}. Cannot continue.", model, "ollama/", f"{groq_available=}")
 
             temperature = conf.get("temperature", 0.25)
             top_p = conf.get("top_p", 0.75)
@@ -261,11 +267,11 @@ async def on_message(message):
 
             if groq_available and not model.startswith("ollama/"):
                 linfo(f"main::on_message || Using Groq to generate response...")
-                resp_content, resp_raw, tools_used = groq_message(groq_client, conversation, restricted_phrases,
+                resp_content, resp_raw, tools_used = groq_message(groq_client, conversation[message.guild.id], restricted_phrases,
                                                                   rand_msg_chance, None, model, temperature, top_p, top_k,
                                                                   frequency_penalty, presence_penalty, maximum_tokens)
                 # Add to the conversation...
-                conversation.append(resp_raw)
+                conversation[message.guild.id].append(resp_raw)
                 print(f"{FM.light_yellow}Rubicon: {resp_content}")
                 
                 # Send the message...
@@ -289,7 +295,7 @@ async def on_message(message):
         
         except groq.UnprocessableEntityError:
             print(f"{FM.error} {lerror(f"main::on_message || Groq API returned an unprocessable entity error!\n{traceback.format_exc()}")}")
-            await message.channel.send("Bad sun; WHATEVER YOU just did, my brain fails to Process it; Hold on, please.;;\n-# \"someone tell kal there is a problem with my ai\"\n-# how in the hell did you get this error it should be impossible")
+            await message.channel.send("bad sunset\n-# \"someone tell kal there is a problem with my ai\"\n-# how in the hell did you get this error it should be impossible")
 
         except Exception:
             print(f"{FM.error} {lerror(f"main::on_message || Unknown error in message handling!\n{traceback.format_exc()}")}")
@@ -327,7 +333,7 @@ async def save_memory(ctx: discord.interactions.Interaction, filename: str = Non
     await ctx.response.send_message("Saving...")
     print(f"{FM.info} {linfo("main::save_memory || Saving...")}")
     
-    result = write_file_safe(json.dumps(conversation), pjoin(dirpath, "..", "memfiles", f"{basename(filename)}.json"))
+    result = write_file_safe(json.dumps(conversation[ctx.guild.id]), pjoin(dirpath, "..", "memfiles", ctx.guild.id, f"{basename(filename)}.json"))
     
     print(f"{FM.info} {linfo(f"main::save_memory || {result if isinstance(result, str) else result.msg}")}")
     await ctx.channel.send(result if isinstance(result, str) else "Failed to save!")
@@ -339,7 +345,7 @@ async def load_memory(ctx: discord.interactions.Interaction, filename: str = Non
     await ctx.response.send_message("Loading...")
     print(f"{FM.info} {linfo("main::load_memory || Loading...")}")
 
-    result = read_json_safe(pjoin(dirpath, "..", "memfiles", f"{basename(filename)}.json"))
+    result = read_json_safe(pjoin(dirpath, "..", "memfiles", ctx.guild.id, f"{basename(filename)}.json"))
 
     if isinstance(result, JSONOperationFailed):
         print(f"{FM.error} {lerror(f"main::load_memory || Failed to load!\n{result.msg}\n{traceback.format_exc()}")}")
@@ -347,18 +353,20 @@ async def load_memory(ctx: discord.interactions.Interaction, filename: str = Non
         return
 
     else:
-        conversation = deepcopy(result)
+        conversation[ctx.guild.id] = deepcopy(result)
         print("Loaded!")
         await ctx.channel.send("Loaded!")
 
 @tree.command(name="reset_memory", description="Reset the memory to the base prompt.", guild=discord.Object(id=1301766861905592361))
-async def reset_memory(ctx: discord.interactions.Interaction):
+async def reset_memory(ctx: discord.interactions.Interaction, reset_nickname_too: bool = False):
     global conversation
 
-    conversation = deepcopy(backup_conversation)
-    conversation[0]["content"] = conversation[0]["content"].replace(f"{{name}}", str(conf.get("bot_name", "Rubicon")))
-    # Change display name
-    await client.user.edit(username=conf.get("bot_name", "Rubicon")) # No display name changing unfortunately
+    conversation[ctx.guild.id] = deepcopy(backup_conversation)
+    conversation[ctx.guild.id][0]["content"] = conversation[ctx.guild.id][0]["content"].replace(f"{{name}}", str(conf.get("bot_name", "Rubicon")))
+
+    if reset_nickname_too:
+        # Change display name
+        await client.user.edit(username=conf.get("bot_name", "Rubicon")) # No display name changing unfortunately
 
     print(f"{FM.info} {linfo('main::reset_memory || Reset!')}")
     await ctx.response.send_message("Reset!")    
@@ -367,7 +375,7 @@ async def reset_memory(ctx: discord.interactions.Interaction):
 async def reset_system(ctx: discord.interactions.Interaction):
     global conversation
 
-    conversation[0] = deepcopy(backup_conversation[0])
+    conversation[ctx.guild.id][0] = deepcopy(backup_conversation[0])
 
     print(f"{FM.info} {linfo('main::reset_system || Reset system prompt!')}")
     await ctx.response.send_message("Reset system prompt!")
@@ -377,7 +385,7 @@ async def display_memory(ctx: discord.interactions.Interaction):
     await ctx.response.send_message("Displaying...")
     print(f"{FM.info} {linfo('main::display_memory || Displaying...')}")
 
-    for message in conversation:
+    for message in conversation[ctx.guild.id]:
         if not isinstance(message, dict):
             role = message.role
             content = message.content
@@ -535,7 +543,7 @@ async def system_message(ctx: discord.interactions.Interaction, message: str = "
         await ctx.response.send_message("Please enter a message to pass as a system message.")
         return
 
-    conversation.append({"role": "system", "content": message})
+    conversation[ctx.guild.id].append({"role": "system", "content": message})
 
     print(f"{FM.info} {linfo(f'main::system_message || Passing message \'{message}\' as system message...')}")
     await ctx.response.send_message("Message passed as system message.")
