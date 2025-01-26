@@ -253,10 +253,10 @@ linfo("interconnections || Config grabbed successfully!")
 _bot_name = str(conf.get("bot_name", "Rubicon"))
 
 conversation = {
-    guild.id: deepcopy(base.baseconvo)[0].replace(f"{{name}}", _bot_name) for guild in client.guilds
+    guild.id: deepcopy(base.baseconvo)[0]["content"].replace(f"{{name}}", _bot_name) for guild in client.guilds
 }
 
-backup_conversation = deepcopy(base.baseconvo)[0].replace(f"{{name}}", _bot_name)
+backup_conversation = deepcopy(base.baseconvo)[0]["content"].replace(f"{{name}}", _bot_name)
 
 nicks = read_json_safe(pjoin(dirpath, "..", "nicknames.json"))
 

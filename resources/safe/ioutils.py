@@ -22,7 +22,7 @@ from resources.deps.dependencydefs import *
 ###                                                                External Modules                                                               ###
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
-check_soft_dependencies(["json-with-comments"], name="Rubicon", descriptions=hard_dependencies)
+check_hard_dependencies(["jsonc"], name="Rubicon", descriptions=hard_dependencies)
 
 import jsonc
 
