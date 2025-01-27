@@ -252,9 +252,7 @@ linfo("interconnections || Config grabbed successfully!")
 
 _bot_name = str(conf.get("bot_name", "Rubicon"))
 
-conversation = {
-    guild.id: deepcopy(base.baseconvo)[0]["content"].replace(f"{{name}}", _bot_name) for guild in client.guilds
-}
+conversation = {} # Filled later.
 
 backup_conversation = deepcopy(base.baseconvo)[0]["content"].replace(f"{{name}}", _bot_name)
 

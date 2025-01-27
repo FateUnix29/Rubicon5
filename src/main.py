@@ -122,29 +122,42 @@ def panic(message: str, *args, **kwargs):
 @client.event
 #@modular(globals_=globals(), no_call=False)
 async def on_ready():
+    global conversation
+
     print(f"{FM.ginfo} {linfo(f'main::on_ready || Logged in as {client.user}:{client.user.id}...')}")
-    
+
     await tree.sync(guild=discord.Object(id=1301766861905592361))
-    
+
     print(f"{FM.ginfo} {linfo(f'main::on_ready || Synced commands...')}")
-    
+
     # FIXME: NON-MODULAR
     # As of Rubicon 5, servers are NOT security checked to see if Rubicon should be there.
 
     curtime = int(dt.now().strftime("%H"))
     strtime = ""
-    
+
     if curtime < 14:
         strtime = "morning"
-    
+
     elif curtime >= 14 and curtime < 20:
         strtime = "afternoon"
-    
+
     else:
         strtime = "evening"
 
     # Quick little detour:
     await client.user.edit(username=conf.get("bot_name", "Rubicon"))
+
+    _bot_name = conf.get("bot_name", "Rubicon")
+
+    conversation = {
+        str(guild.id): [
+            {
+                "role": "system",
+                "content": deepcopy(base.baseconvo)[0]["content"].replace(f"{{name}}", _bot_name)
+            }
+        ] for guild in client.guilds
+    }
 
     embed = discord.Embed(
         title=f"Good {strtime}! {conf.get('bot_name', 'Rubicon')} is online!",
@@ -245,7 +258,7 @@ async def on_message(message):
             # FIXME: NON-MODULAR
             # Let's do this!
             
-            conversation[message.guild.id].append({"role": "user", "content": full_message})
+            conversation[str(message.guild.id)].append({"role": "user", "content": full_message})
 
             model = conf.get("model", "llama-3.3-70b-versatile")
 
@@ -267,11 +280,11 @@ async def on_message(message):
 
             if groq_available and not model.startswith("ollama/"):
                 linfo(f"main::on_message || Using Groq to generate response...")
-                resp_content, resp_raw, tools_used = groq_message(groq_client, conversation[message.guild.id], restricted_phrases,
+                resp_content, resp_raw, tools_used = groq_message(groq_client, conversation[str(message.guild.id)], restricted_phrases,
                                                                   rand_msg_chance, None, model, temperature, top_p, top_k,
                                                                   frequency_penalty, presence_penalty, maximum_tokens)
                 # Add to the conversation...
-                conversation[message.guild.id].append(resp_raw)
+                conversation[str(message.guild.id)].append(resp_raw)
                 print(f"{FM.light_yellow}Rubicon: {resp_content}")
                 
                 # Send the message...
@@ -333,7 +346,7 @@ async def save_memory(ctx: discord.interactions.Interaction, filename: str = Non
     await ctx.response.send_message("Saving...")
     print(f"{FM.info} {linfo("main::save_memory || Saving...")}")
     
-    result = write_file_safe(json.dumps(conversation[ctx.guild.id]), pjoin(dirpath, "..", "memfiles", ctx.guild.id, f"{basename(filename)}.json"))
+    result = write_file_safe(json.dumps(conversation[str(ctx.guild.id)]), pjoin(dirpath, "..", "memfiles", str(ctx.guild.id), f"{basename(filename)}.json"))
     
     print(f"{FM.info} {linfo(f"main::save_memory || {result if isinstance(result, str) else result.msg}")}")
     await ctx.channel.send(result if isinstance(result, str) else "Failed to save!")
@@ -345,7 +358,7 @@ async def load_memory(ctx: discord.interactions.Interaction, filename: str = Non
     await ctx.response.send_message("Loading...")
     print(f"{FM.info} {linfo("main::load_memory || Loading...")}")
 
-    result = read_json_safe(pjoin(dirpath, "..", "memfiles", ctx.guild.id, f"{basename(filename)}.json"))
+    result = read_json_safe(pjoin(dirpath, "..", "memfiles", str(ctx.guild.id), f"{basename(filename)}.json"))
 
     if isinstance(result, JSONOperationFailed):
         print(f"{FM.error} {lerror(f"main::load_memory || Failed to load!\n{result.msg}\n{traceback.format_exc()}")}")
@@ -353,7 +366,7 @@ async def load_memory(ctx: discord.interactions.Interaction, filename: str = Non
         return
 
     else:
-        conversation[ctx.guild.id] = deepcopy(result)
+        conversation[str(ctx.guild.id)] = deepcopy(result)
         print("Loaded!")
         await ctx.channel.send("Loaded!")
 
@@ -361,8 +374,8 @@ async def load_memory(ctx: discord.interactions.Interaction, filename: str = Non
 async def reset_memory(ctx: discord.interactions.Interaction, reset_nickname_too: bool = False):
     global conversation
 
-    conversation[ctx.guild.id] = deepcopy(backup_conversation)
-    conversation[ctx.guild.id][0]["content"] = conversation[ctx.guild.id][0]["content"].replace(f"{{name}}", str(conf.get("bot_name", "Rubicon")))
+    conversation[str(ctx.guild.id)] = deepcopy(backup_conversation)
+    conversation[str(ctx.guild.id)][0]["content"] = conversation[str(ctx.guild.id)][0]["content"].replace(f"{{name}}", str(conf.get("bot_name", "Rubicon")))
 
     if reset_nickname_too:
         # Change display name
@@ -375,7 +388,7 @@ async def reset_memory(ctx: discord.interactions.Interaction, reset_nickname_too
 async def reset_system(ctx: discord.interactions.Interaction):
     global conversation
 
-    conversation[ctx.guild.id][0] = deepcopy(backup_conversation[0])
+    conversation[str(ctx.guild.id)][0] = deepcopy(backup_conversation[0])
 
     print(f"{FM.info} {linfo('main::reset_system || Reset system prompt!')}")
     await ctx.response.send_message("Reset system prompt!")
@@ -385,7 +398,8 @@ async def display_memory(ctx: discord.interactions.Interaction):
     await ctx.response.send_message("Displaying...")
     print(f"{FM.info} {linfo('main::display_memory || Displaying...')}")
 
-    for message in conversation[ctx.guild.id]:
+    for message in conversation[str(ctx.guild.id)]:
+
         if not isinstance(message, dict):
             role = message.role
             content = message.content
@@ -543,7 +557,7 @@ async def system_message(ctx: discord.interactions.Interaction, message: str = "
         await ctx.response.send_message("Please enter a message to pass as a system message.")
         return
 
-    conversation[ctx.guild.id].append({"role": "system", "content": message})
+    conversation[str(ctx.guild.id)].append({"role": "system", "content": message})
 
     print(f"{FM.info} {linfo(f'main::system_message || Passing message \'{message}\' as system message...')}")
     await ctx.response.send_message("Message passed as system message.")
