@@ -440,7 +440,8 @@ async def sync_cmd(ctx: discord.interactions.Interaction):
     print(f"{FM.info} {linfo('main::sync || Syncing...')}")
     await ctx.response.send_message("Syncing...")
     
-    await tree.sync(guild=discord.Object(id=1301766861905592361))
+    #await tree.sync(guild=discord.Object(id=1301766861905592361))
+    await tree.sync()
     
     print(f"{FM.info} {linfo('main::sync || Synced commands...')}")
     await ctx.channel.send("Synced.")
