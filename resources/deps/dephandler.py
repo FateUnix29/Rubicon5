@@ -12,6 +12,12 @@ if os.name == "nt":
     os.system("color") # Color correctly initializes the terminal coloring system on Windows.
 
 
+### Internal Source Files ###
+
+from resources.hooks.hooklib import modular_fn
+
+
+@modular_fn(current_globals=globals())
 def check_soft_dependencies(modules: list[str], name: str | None = None, descriptions: dict[str, str] | None = None) -> list[bool]:
     """A function for checking if soft dependencies are met, displaying a warning if not.
     
@@ -44,7 +50,7 @@ def check_soft_dependencies(modules: list[str], name: str | None = None, descrip
     return modules_available
 
 
-
+@modular_fn(current_globals=globals())
 def check_hard_dependencies(modules: list[str], name: str | None = None, descriptions: dict[str, str] | None = None) -> None:
     """A function for checking if hard dependencies are met, displaying an error if not.
     If a module is not found, this function will attempt to use sys.exit(1).

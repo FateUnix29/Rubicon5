@@ -10,3 +10,7 @@ __pycache__/
 # Any files whos' names start with a dot or "EXCLUDE"
 EXCLUDE*
 .*
+
+# Memfiles.
+memfiles
+memfiles/*

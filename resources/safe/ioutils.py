@@ -18,6 +18,8 @@ import json
 from resources.deps.dephandler import *
 from resources.deps.dependencydefs import *
 
+from resources.hooks.hooklib import modular_fn
+
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 ###                                                                External Modules                                                               ###
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -40,6 +42,7 @@ class JSONOperationFailed():
 ###                                                                   Functions                                                                   ###
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
+@modular_fn(current_globals=globals())
 def read_json_safe(path):
     """Reads a JSON file safely, with exhaustive error handling.
     
@@ -76,6 +79,8 @@ def read_json_safe(path):
         return JSONOperationFailed(f"General exception: {type(e).__name__}: {e}")
 
 
+
+@modular_fn(current_globals=globals())
 def read_jsonc_safe(path):
     """Reads a JSONC file safely, with exhaustive error handling.
     
@@ -111,6 +116,9 @@ def read_jsonc_safe(path):
     except Exception as e:
         return JSONOperationFailed(f"General exception: {type(e).__name__}: {e}")
 
+
+
+@modular_fn(current_globals=globals())
 def write_file_safe(data: any, path: str):
     """Writes data to a file safely, with exhaustive error handling.
     

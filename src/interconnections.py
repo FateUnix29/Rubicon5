@@ -16,7 +16,6 @@ from os.path import \
     dirname, join as pjoin, exists, isfile, isdir, basename, realpath     # OS and System | Path manipulation.
 
 import time, datetime                                                     # Time          | Time functions.
-from src.modularity import *                                              # Modules       | The experimental RB5 modularity system, including live patching.
 
 from copy import deepcopy                                                 # Copy          | Utility for creating a deep copy of an object.
 
@@ -33,6 +32,10 @@ from resources.deps.dependencydefs import *
 from resources.term.colors import *
 
 from resources.safe.ioutils import *
+
+from resources.hooks.hooklib import *
+
+from resources.ai.tools_formatter import *
 
 from src import base
 
@@ -89,7 +92,7 @@ if logging_available:
 
     loggers.append(logger)
 
-
+@modular_fn(current_globals=globals())
 def log(level: str = "info", msg: str = "", *args, **kwargs):
     """A logging function for Rubicon 5. If logging is available, it uses the 'rubi-5' logger and logs to a file.
     If logging is not available, it does nothing.
@@ -107,35 +110,35 @@ def log(level: str = "info", msg: str = "", *args, **kwargs):
     return msg
 
 
-
+@modular_fn(current_globals=globals())
 def linfo(msg: str, *args, **kwargs):
     """Just calls log() with the 'info' level."""
 
     return log("info", msg, *args, **kwargs)
 
 
-
+@modular_fn(current_globals=globals())
 def lwarning(msg: str, *args, **kwargs):
     """Just calls log() with the 'warning' level."""
 
     return log("warning", msg, *args, **kwargs)
 
 
-
+@modular_fn(current_globals=globals())
 def lerror(msg: str, *args, **kwargs):
     """Just calls log() with the 'error' level."""
 
     return log("error", msg, *args, **kwargs)
 
 
-
+@modular_fn(current_globals=globals())
 def ldebug(msg: str, *args, **kwargs):
     """Just calls log() with the 'debug' level."""
 
     return log("debug", msg, *args, **kwargs)
 
 
-
+@modular_fn(current_globals=globals())
 def lcritical(msg: str, *args, **kwargs):
     """Just calls log() with the 'critical' level."""
 
@@ -214,6 +217,8 @@ else:
 linfo("interconnections || Keys get!")
 
 
+
+@modular_fn(current_globals=globals())
 def get_config(path: str, update_globals: bool = False) -> dict | JSONOperationFailed:
     """Grabs the config file and returns it as a dictionary, or an error message if something goes wrong.
     Also, updates the globals of interconnections if update_globals is True."""
@@ -268,3 +273,22 @@ if isinstance(nicks, JSONOperationFailed):
     FM.header_error("Bad Nicknames Information", f"The nicknames.json file is malformed. Does it exist?\n{nicks.msg}\nPossible traceback:\n{traceback.format_exc()}")
     lcritical("Bad Nicknames Information" + f"\nThe nicknames.json file is malformed. Does it exist?\n{nicks.msg}\nPossible traceback:\n{traceback.format_exc()}")
     sys.exit(1)
+
+#   NOTE NOTE NOTE NOTE
+
+#   Use resources.ai.tools_formatter.add_tool to turn a function and it's arguments into an OpenAI tool structure.
+#   From there, you can either append to tools with something like this (I like using add_tool call as the arguments to these functions):
+
+#   tools.append(add_tool(fn, {"arg": "arg description"}))
+
+#   Or something like this for multiple:
+ 
+#   tools.extend(
+#       [
+#           add_tool(fn,  {"arg": "arg description"}),
+#           add_tool(fn2, {"arg": "arg description"}),
+#           ...
+#       ]
+#   )
+
+tools = []

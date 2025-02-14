@@ -1,15 +1,15 @@
 {
     // AI
     "bot_name":              "Rubicon",                // The name that Rubicon takes on. Display name is set to this as well.
-    "temperature":           0.31,                     // Rubicon's temperature. Less likely words/symbols become more likely to be chosen as this goes up.
-    "top_p":                 1.00,                     // Top percentage. Like temperature in reverse. Recommended not to mix temp and top_p. 0-1.
+    "temperature":           0.32,                     // Rubicon's temperature. Less likely words/symbols become more likely to be chosen as this goes up.
+    "top_p":                 0.95,                     // Top percentage. Like temperature in reverse. Recommended not to mix temp and top_p. 0-1.
     "top_k":                 40,                       // Top K most probable tokens (words & symbols). 40 means only the top 40 most probable tokens are considered.
-    "frequency_penalty":     0.00,                     // Lowers the 'score' of each used word depending on how much it's been used, making them less likely to be used again.
+    "frequency_penalty":     0.10,                     // Lowers the 'score' of each used word depending on how much it's been used, making them less likely to be used again.
     "presence_penalty":      0.00,                     // Encourages the use of different words by applying a penalty even if a word is only used once. Applied only once per word.
-    "max_tokens":            32768,                    // Context length/max token count. The memory of the AI is finite, and limited to this many tokens.
+    "max_tokens":            131072,                   // Context length/max token count. The memory of the AI is finite, and limited to this many tokens.
     "random_message_chance": 150,                      // 1/n chance that a randomized message is provided with the AI response.
     "default_sibling_count": 0,                        // How many siblings Rubicon has by default.
-    "model_name": "llama-3.3-70b-versatile",           // The name of the model to use - Use "ollama/" prefix for local models
+    "model_name": "deepseek-r1-distill-llama-70b",     // The name of the model to use - Use "ollama/" prefix for local models
 
     // Discord
     "general_channel_names": ["rubicon-general"],      // A list of channel names to respond in.
@@ -19,6 +19,7 @@
     "all_channel_name":      "rubicon-all",            // The name of the 'all channel': A channel that conjoins all servers Rubicon is in.
     "all_channel_enabled":   true,                     // If false, the all channel is just a regular channel. Set to false if you don't want to use it or if Rubicon is in 10+ servers or so.
     "special_character":     "^",                      // Modifies the behavior of Rubicon for messages starting with this character. Usually flips the mode, but also does other stuff.
+    "user_information":      true,                     // If Rubicon should receive information on who sent a message.
 
     "guilds_blacklist":      [],                       // Guild IDs in this list have no authority over Rubicon; their elevated/control roles have no effect.
 
@@ -34,6 +35,9 @@
     "boot_message":          true,                     // If true, send a boot message when Rubicon starts.
 
     // Advanced
-    "version":               "5.3.1.3",                // The displayed version of the program. Unless you are modifying Rubicon, it is not recommended to change this.
-    "who_can_dm_me":         [892121731232333924]      // A list of user IDs that can DM Rubicon. These users are automatically given control-level permissions, so choose wisely.
+    "version":               "5.4.0.0",                // The displayed version of the program. Unless you are modifying Rubicon, it is not recommended to change this.
+    "who_can_dm_me":         [1200274292768780519],    // A list of user IDs that can DM Rubicon. These users are automatically given control-level permissions, so choose wisely.
+    "everyone_can_dm_me":    true,                     // If enabled, anyone can DM Rubicon, and it'll respond. However, the user has no permissions. [WIP DOES NOT WORK YET!!]
+
+    "memory":                true                      // Intentional no description. It is not recommended to change this, ever.
 }

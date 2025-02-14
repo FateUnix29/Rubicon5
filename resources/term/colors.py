@@ -10,6 +10,8 @@
 from builtins import print as _print
 import os
 
+from resources.hooks.hooklib import modular_fn
+
 if os.name == 'nt': os.system('color') # On NT systems, 'color' properly initializes the terminal coloring system. Specifically, this command resets the colors when ran this way.
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -45,10 +47,14 @@ class FM: # Good ol' legacy FM class from old Rubicon versions...
     yinfo = f"{bold}{light_yellow}INFO{remove_bold} "
 
     @staticmethod
+    @modular_fn(current_globals=globals())
     def header_warn(header, msg):
         print(f"{FM.warning} {header}\n{msg}")
-    
+
+
+
     @staticmethod
+    @modular_fn(current_globals=globals())
     def header_error(header, msg):
         print(f"{FM.error} {header}\n{msg}")
 
@@ -56,6 +62,8 @@ class FM: # Good ol' legacy FM class from old Rubicon versions...
 ###                                                                   Functions                                                                   ###
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
+
+@modular_fn(current_globals=globals())
 def print(*args, end='\n', reset_color=True, **kwargs):
     if reset_color: _print(*args, end=f"{end}{FM.reset}", **kwargs)
     else: _print(*args, end=f"{end}", **kwargs)

@@ -61,13 +61,14 @@ if pytz_available: import pytz
 from resources.term.colors import *                                       # Resources     | Terminal coloring system.
 
 from src.interconnections import *                                        # Source Code   | Interconnections is a special file that connects all the source files,
-#                                                                                         | managing to prevent a circular import.
-
-import mods                                                               # Modules       | Unused. Just starts the modules.
-from src.modularity import *                                              # Modules       | The experimental RB5 modularity system, including live patching.
+                                                                          #               | managing to prevent a circular import.
 
 from resources.ai.messages import *                                       # Resources     | AI message functions.
 from resources.ai.messageformatter import *                               # Resources     | Functions for formatting the input to the AI.
+
+
+from resources.hooks.hooklib import *                                     # HookLib       | Modify code of functions at runtime for modularity and 'mods'.
+                                                                          #               | At last, Rubicon 5 has a basic functioning prototype of it's modularity system.
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -120,7 +121,7 @@ def panic(message: str, *args, **kwargs):
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
 @client.event
-#@modular(globals_=globals(), no_call=False)
+@modular_fn(current_globals=globals())
 async def on_ready():
     global conversation
 
@@ -188,7 +189,7 @@ async def on_ready():
 restricted_phrases = ["[Inst]", "</s>", "<s>", "(/s)", "[deleted]", "[/s]", "[!/s]", r"<\s>", "<ignore>"]
 
 @client.event
-#@modular(globals_=globals(), no_call=False)
+@modular_fn(current_globals=globals())
 async def on_message(message):
     global ret, conversation, backup_conversation, conf, nicks
 
@@ -248,9 +249,16 @@ async def on_message(message):
 
     message_content = message_content.strip()
 
-    assembled_header, _ = message_header(rubi_perceived_display, rubi_perceived_name, channelname, msgguild, accurate_datetime())
+    if conf.get("user_information", True):
+
+        assembled_header, _ = message_header(rubi_perceived_display, rubi_perceived_name, channelname, msgguild, accurate_datetime())
+
+    else:
+
+        assembled_header = ""
+
     full_message = f"{assembled_header}{message_content}"
-    
+
     print(f"{FM.light_blue}{assembled_header}{FM.light_cyan}{message_content}")
     linfo(f"main::on_message || {full_message}")
 
@@ -261,7 +269,7 @@ async def on_message(message):
             
             conversation[str(message.guild.id)].append({"role": "user", "content": full_message})
 
-            model = conf.get("model", "llama-3.3-70b-versatile")
+            model = conf.get("model_name", "llama-3.3-70b-versatile")
 
             if groq_available and not model.startswith("ollama/"):
                 if not get_valid_groq_model(model, groq_client):
@@ -278,38 +286,60 @@ async def on_message(message):
             presence_penalty = conf.get("presence_penalty", 0.00)
             maximum_tokens = conf.get("maximum_tokens", 32768)
             rand_msg_chance = conf.get("random_message_chance", 150)
+            use_memory = conf.get("memory", True)
 
             if groq_available and not model.startswith("ollama/"):
                 linfo(f"main::on_message || Using Groq to generate response...")
                 resp_content, resp_raw, tools_used = groq_message(groq_client, conversation[str(message.guild.id)], restricted_phrases,
-                                                                  rand_msg_chance, None, model, temperature, top_p, top_k,
-                                                                  frequency_penalty, presence_penalty, maximum_tokens)
+                                                                  rand_msg_chance, tools, model, temperature, top_p, top_k,
+                                                                  frequency_penalty, presence_penalty, maximum_tokens, use_memory)
                 # Add to the conversation...
                 conversation[str(message.guild.id)].append(resp_raw)
                 print(f"{FM.light_yellow}Rubicon: {resp_content}")
-                
-                # Send the message...
-                await message.channel.send(resp_content)
+
+                messages_to_send = []
+                character_limit_each = 2000
+                cutoff_character = ''
+
+                for i in range(0, len(resp_content), character_limit_each):
+                    messages_to_send.append(resp_content[i:i+character_limit_each] + cutoff_character)
+
+                for msg in messages_to_send:
+                    # Send the message...
+                    await message.channel.send(f'{msg}{"\n-# Rubicon is in no-memory mode." if not use_memory and i == (len(messages_to_send) - 1) else ""}')
+
+                #await message.channel.send(f"{resp_content}{'\n-# Rubicon is in no-memory mode.' if not use_memory else ''}")
 
             else:
                 # Bye bye...
                 panic("Ollama is not implemented! Todo!", model, "ollama/")
-        
+
+
         except groq.GroqError:
+
             print(f"{FM.error} {lerror(f"main::on_message || Groq API returned a general error!\n{traceback.format_exc()}")}")
             await message.channel.send("My brain is having some issues. Hold on, please.\n-# \"someone tell kal there is a problem with my ai\"")
-        
+
+
+        except groq.InternalServerError:
+            print(f"{FM.error} {lerror(f"main::on_message || Groq API returned an internal server error!\n{traceback.format_exc()}")}")
+            await message.channel.send("It would appear.\n-# \"someone tell kal there is a problem with my ai\"")
+
+
         except groq.BadRequestError:
             print(f"{FM.error} {lerror(f"main::on_message || Groq API returned a bad request error!\n{traceback.format_exc()}")}")
             await message.channel.send("I'm having issues talking to my brain. Hold on, please.\n-# \"someone tell kal there is a problem with my ai\"")
         
+
         except groq.RateLimitError:
             print(f"{FM.error} {lerror(f"main::on_message || We're being rate limited by Groq.\n{traceback.format_exc()}")}")
             await message.channel.send("My brain is rate limiting me. Hold on, please.\n-# \"someone tell kal there is a problem with my ai\"\n-# oh and also can you tell me how to get the time remaining")
         
+
         except groq.UnprocessableEntityError:
             print(f"{FM.error} {lerror(f"main::on_message || Groq API returned an unprocessable entity error!\n{traceback.format_exc()}")}")
             await message.channel.send("bad sunset\n-# \"someone tell kal there is a problem with my ai\"\n-# how in the hell did you get this error it should be impossible")
+
 
         except Exception:
             print(f"{FM.error} {lerror(f"main::on_message || Unknown error in message handling!\n{traceback.format_exc()}")}")
@@ -320,6 +350,7 @@ async def on_message(message):
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
 @tree.command(name="reload_config", description="Reloads the configuration file.")#, guild=discord.Object(id=1301766861905592361))
+@modular_fn(current_globals=globals())
 async def reload_config(ctx: discord.interactions.Interaction):
     global conf
 
@@ -341,18 +372,57 @@ async def reload_config(ctx: discord.interactions.Interaction):
 
     linfo("interconnections || Config grabbed successfully!")
 
+
+
 @tree.command(name="save_memory", description="Saves memory to a file. Paths do not work.")#, guild=discord.Object(id=1301766861905592361))
+@modular_fn(current_globals=globals())
 async def save_memory(ctx: discord.interactions.Interaction, filename: str = None):
-    
+
+    # Check if the guild's memory folder exists
+    guild_memfiles_path = pjoin(dirpath, "..", "memfiles", str(ctx.guild.id))
+
+    if not os.path.exists(guild_memfiles_path):
+        os.makedirs(guild_memfiles_path, exist_ok=True)
+
     await ctx.response.send_message("Saving...")
     print(f"{FM.info} {linfo("main::save_memory || Saving...")}")
-    
-    result = write_file_safe(json.dumps(conversation[str(ctx.guild.id)]), pjoin(dirpath, "..", "memfiles", str(ctx.guild.id), f"{basename(filename)}.json"))
-    
-    print(f"{FM.info} {linfo(f"main::save_memory || {result if isinstance(result, str) else result.msg}")}")
-    await ctx.channel.send(result if isinstance(result, str) else "Failed to save!")
+
+    try:
+
+        converted_memory = []
+
+        for message in conversation[str(ctx.guild.id)]:
+
+            if not isinstance(message, dict):
+                # Most likely a chat completion object. Replace this with a regular dict.
+                message = {"role": message.role, "content": message.content} # Do not remember tool calls yet.
+
+            converted_memory.append({"role": message["role"], "content": message["content"]})
+
+
+
+        filename_to_use = filename or "memory.json"
+
+        result = write_file_safe(
+
+            json.dumps(converted_memory, indent=4),
+            pjoin(guild_memfiles_path, f"{basename(filename_to_use)}")
+
+        )
+
+
+        print(f"{FM.info} {linfo(f"main::save_memory || {result if isinstance(result, str) else result.msg}")}")
+        await ctx.channel.send(result if isinstance(result, str) else "Failed to save!")
+
+    except:
+
+        print(f"{FM.error} {lerror(f"main::save_memory || Failed to save!\n{traceback.format_exc()}")}")
+        await ctx.channel.send("Failed to save!")
+
+
 
 @tree.command(name="load_memory", description="Loads memory from a file. Paths do not work.")#, guild=discord.Object(id=1301766861905592361))
+@modular_fn(current_globals=globals())
 async def load_memory(ctx: discord.interactions.Interaction, filename: str = None):
     global conversation
     
@@ -371,7 +441,10 @@ async def load_memory(ctx: discord.interactions.Interaction, filename: str = Non
         print("Loaded!")
         await ctx.channel.send("Loaded!")
 
+
+
 @tree.command(name="reset_memory", description="Reset the memory to the base prompt.")#, guild=discord.Object(id=1301766861905592361))
+@modular_fn(current_globals=globals())
 async def reset_memory(ctx: discord.interactions.Interaction, reset_nickname_too: bool = False):
     global conversation
 
@@ -385,7 +458,10 @@ async def reset_memory(ctx: discord.interactions.Interaction, reset_nickname_too
     print(f"{FM.info} {linfo('main::reset_memory || Reset!')}")
     await ctx.response.send_message("Reset!")    
 
+
+
 @tree.command(name="reset_system", description="Reset the system prompt.")#, guild=discord.Object(id=1301766861905592361))
+@modular_fn(current_globals=globals())
 async def reset_system(ctx: discord.interactions.Interaction):
     global conversation
 
@@ -394,7 +470,10 @@ async def reset_system(ctx: discord.interactions.Interaction):
     print(f"{FM.info} {linfo('main::reset_system || Reset system prompt!')}")
     await ctx.response.send_message("Reset system prompt!")
 
+
+
 @tree.command(name="display_memory", description="Displays the entire memory of Rubicon.")#, guild=discord.Object(id=1301766861905592361))
+@modular_fn(current_globals=globals())
 async def display_memory(ctx: discord.interactions.Interaction):
     await ctx.response.send_message("Displaying...")
     print(f"{FM.info} {linfo('main::display_memory || Displaying...')}")
@@ -422,7 +501,10 @@ async def display_memory(ctx: discord.interactions.Interaction):
     
     await ctx.channel.send("-# End of conversation...")
 
+
+
 @tree.command(name="reload_system", description="Reloads the backup system prompt. Also a good idea when changing bot_name.")#, guild=discord.Object(id=1301766861905592361))
+@modular_fn(current_globals=globals())
 async def display_system(ctx: discord.interactions.Interaction):
     global backup_conversation
 
@@ -435,7 +517,10 @@ async def display_system(ctx: discord.interactions.Interaction):
     print(f"{FM.info} {linfo('main::reload_system || Reloaded system prompt!')}")
     await ctx.channel.send("Reloaded system prompt!")
 
+
+
 @tree.command(name="sync", description="Sync.")#, guild=discord.Object(id=1301766861905592361))
+@modular_fn(current_globals=globals())
 async def sync_cmd(ctx: discord.interactions.Interaction):
     print(f"{FM.info} {linfo('main::sync || Syncing...')}")
     await ctx.response.send_message("Syncing...")
@@ -446,7 +531,10 @@ async def sync_cmd(ctx: discord.interactions.Interaction):
     print(f"{FM.info} {linfo('main::sync || Synced commands...')}")
     await ctx.channel.send("Synced.")
 
+
+
 @tree.command(name="crimas", description="Display the **exact** time until Christmas Day. Try entering timezone \"help\".")#, guild=discord.Object(id=1301766861905592361))
+@modular_fn(current_globals=globals())
 async def crimas(ctx: discord.interactions.Interaction, timezone: str = ""):
     
     if timezone == "help":
@@ -504,7 +592,10 @@ For full information, please see the documentation for `pytz.timezone()`.
 
     await ctx.response.send_message(f"Christmas Day is in `{time_left_days}` days, `{time_left_hours}` hours, and `{time_left_minutes}` minutes for the `{timezone2print}` timezone.\nIn other words, `{time_left_days_pad}:{time_left_hours_pad}:{time_left_minutes_pad}:{time_left_seconds_pad}`.\n-# The exact time in standard UNIX format is `{time_left_real}`.")
 
+
+
 @tree.command(name="nickname", description="Change your nickname, the name the bot perceives you as.")#, guild=discord.Object(id=1301766861905592361))
+@modular_fn(current_globals=globals())
 async def nickname(ctx: discord.interactions.Interaction, nickname: str = ""):
     global nicks
 
@@ -543,7 +634,10 @@ async def nickname(ctx: discord.interactions.Interaction, nickname: str = ""):
         print(f"{FM.error} {lerror(f"main::nickname || Failed to change user's nickname. Information: {status.msg}, possible traceback:\n{traceback.format_exc()}")}")
         await ctx.channel.send("Failed to change nickname!")
 
+
+
 @tree.command(name="system_message", description="Pass your message as one from the system.")#, guild=discord.Object(id=1301766861905592361))
+@modular_fn(current_globals=globals())
 async def system_message(ctx: discord.interactions.Interaction, message: str = ""):
     global conversation
     
@@ -564,6 +658,8 @@ async def system_message(ctx: discord.interactions.Interaction, message: str = "
     print(f"{FM.info} {linfo(f'main::system_message || Passing message \'{message}\' as system message...')}")
     await ctx.response.send_message("Message passed as system message.")
 
+
+
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 ###                                                                    Cleanup                                                                    ###
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -574,6 +670,16 @@ def cleanup():
         logger.removeHandler(handler)
     handler.close()
 
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+###                                                         Internal Source Files (Final)                                                         ###
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+
+# Any source files that will break if initialized sooner go here, such as the modules.
+# Why the modules? Well, we declare the functions that they can patch above.
+# If modules are imported sooner, then their @module decorators will evaluate before the functions are declared, causing NameError's.
+
+
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 ###                                                                    Running                                                                    ###
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -581,7 +687,10 @@ def cleanup():
 if __name__ == "__main__":
 
     #try:
-    linfo("main || Running...")
+    print(f"{FM.ginfo} {linfo("main || Running...")}")
+
+    from mods import *                                                               # Modules       | Unused. Just starts the modules.
+
     client.run(discord_token)
 
     #except KeyboardInterrupt:
